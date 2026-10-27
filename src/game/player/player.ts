@@ -44,6 +44,7 @@ export function createPlayerRuntime(run: RunState, state: PlayerState, minerX: n
     mods,
     minerX,
     magnet: false,
+    stun: 0,
     xpGained: 0,
     earned: 0,
     hook: {

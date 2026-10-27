@@ -230,7 +230,10 @@ export function drawStatic(g: G, name: string, r: number, variant: number): bool
   let bmp = cache.get(key);
   if (!bmp) {
     const size = Math.ceil(r * 3);
-    const c = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(size * 2, size * 2) : document.createElement('canvas');
+    const c =
+      typeof OffscreenCanvas !== 'undefined'
+        ? new OffscreenCanvas(size * 2, size * 2)
+        : document.createElement('canvas');
     c.width = size * 2;
     c.height = size * 2;
     const cg = c.getContext('2d') as G;
@@ -245,13 +248,100 @@ export function drawStatic(g: G, name: string, r: number, variant: number): bool
   return true;
 }
 
-export function drawPig(g: G, r: number, t: number, facing: 1 | -1, diamondOnBack: boolean, frozen: boolean): void {
+/** Hedgehog, facing right before `facing` is applied. Cartoon outline style to sit next to the original art. */
+export function drawHedgehog(g: G, r: number, t: number, facing: 1 | -1, frozen: boolean): void {
+  g.save();
+  g.scale(facing, 1);
+  g.lineJoin = 'round';
+  g.lineWidth = Math.max(1.5, r * 0.09);
+  const outline = '#3b2414';
+  const step = frozen ? 0 : Math.sin(t * 12) * r * 0.12;
+  // feet
+  g.fillStyle = '#7a4f2e';
+  for (const [x, ph] of [
+    [-0.45, 1],
+    [-0.1, -1],
+    [0.3, 1],
+    [0.55, -1],
+  ] as const) {
+    g.beginPath();
+    g.ellipse(r * x + ph * step, r * 0.62, r * 0.13, r * 0.09, 0, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = outline;
+    g.stroke();
+  }
+  // spiky back: a ring of triangles around the upper body
+  g.beginPath();
+  const spikes = 11;
+  for (let i = 0; i <= spikes; i++) {
+    const a = Math.PI + (i / spikes) * Math.PI * 1.05 - 0.05;
+    const rr = i % 2 ? r * 1.12 : r * 0.82;
+    const x = Math.cos(a) * rr * 1.05 - r * 0.12;
+    const y = Math.sin(a) * rr * 0.92 + r * 0.18;
+    if (i === 0) g.moveTo(x, y);
+    else g.lineTo(x, y);
+  }
+  g.lineTo(r * 0.7, r * 0.5);
+  g.lineTo(-r * 0.95, r * 0.5);
+  g.closePath();
+  g.fillStyle = '#5a3a22';
+  g.fill();
+  g.strokeStyle = outline;
+  g.stroke();
+  // spike streaks
+  g.strokeStyle = 'rgba(240, 220, 190, 0.55)';
+  g.lineWidth = Math.max(1, r * 0.05);
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI + 0.35 + i * 0.42;
+    g.beginPath();
+    g.moveTo(Math.cos(a) * r * 0.35 - r * 0.12, Math.sin(a) * r * 0.3 + r * 0.18);
+    g.lineTo(Math.cos(a) * r * 0.85 - r * 0.12, Math.sin(a) * r * 0.75 + r * 0.18);
+    g.stroke();
+  }
+  // face
+  g.lineWidth = Math.max(1.5, r * 0.09);
+  g.beginPath();
+  g.ellipse(r * 0.62, r * 0.18, r * 0.42, r * 0.32, -0.15, 0, Math.PI * 2);
+  g.fillStyle = '#e9cfa5';
+  g.fill();
+  g.strokeStyle = outline;
+  g.stroke();
+  g.beginPath();
+  g.arc(r * 1.02, r * 0.12, r * 0.1, 0, Math.PI * 2);
+  g.fillStyle = '#e46d86';
+  g.fill();
+  g.beginPath();
+  g.arc(r * 0.62, r * 0.05, r * 0.07, 0, Math.PI * 2);
+  g.fillStyle = '#1b1b1b';
+  g.fill();
+  if (frozen) {
+    g.beginPath();
+    g.ellipse(0, r * 0.05, r * 1.45, r * 1.05, 0, 0, Math.PI * 2);
+    g.fillStyle = 'rgba(160, 220, 255, 0.45)';
+    g.fill();
+  }
+  g.restore();
+}
+
+export function drawPig(
+  g: G,
+  r: number,
+  t: number,
+  facing: 1 | -1,
+  diamondOnBack: boolean,
+  frozen: boolean,
+): void {
   g.save();
   g.scale(facing, 1);
   const step = frozen ? 0 : Math.sin(t * 12) * r * 0.18;
   // legs
   g.fillStyle = '#d97f96';
-  for (const [x, ph] of [[-0.55, 1], [-0.2, -1], [0.25, 1], [0.55, -1]] as const) {
+  for (const [x, ph] of [
+    [-0.55, 1],
+    [-0.2, -1],
+    [0.25, 1],
+    [0.55, -1],
+  ] as const) {
     g.fillRect(r * x - r * 0.1, r * 0.35 + (ph > 0 ? step : -step) * 0.3, r * 0.2, r * 0.45);
   }
   // body

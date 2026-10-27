@@ -1,6 +1,15 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useSelector } from '@tanstack/react-store';
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from 'react';
+import { WORLD, setWorldAspect } from '@/config/global';
 import type { Action } from '@/config/keys';
 import { GameHost } from '@/game/host';
 import { finishLevel } from '@/game/run';
@@ -30,6 +39,36 @@ declare global {
 
 function PlayPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [frameSize, setFrameSize] = useState<{ w: number; h: number } | null>(null);
+  const [worldWidth, setWorldWidth] = useState(WORLD.width);
+
+  /** Area available inside the play root (its client size minus the safe-area padding). */
+  const available = useCallback(() => {
+    const el = rootRef.current;
+    if (!el) return null;
+    const cs = getComputedStyle(el);
+    const w = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const h = el.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    return w > 0 && h > 0 ? { w, h } : null;
+  }, []);
+
+  /** Largest frame with the world's aspect ratio that fits the available area. */
+  const fitFrame = useCallback(() => {
+    const a = available();
+    if (!a) return;
+    const aspect = WORLD.width / WORLD.height;
+    const w = Math.floor(Math.min(a.w, a.h * aspect));
+    setFrameSize({ w, h: Math.floor(w / aspect) });
+  }, [available]);
+
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => fitFrame());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fitFrame]);
   const hostRef = useRef<GameHost | null>(null);
   const navigate = useNavigate();
   const paused = useSelector(sessionStore, (s) => s.paused);
@@ -44,6 +83,13 @@ function PlayPage() {
 
   useEffect(() => {
     const run = getRun();
+    // the playfield takes the screen's shape for this level, so there are no black bars
+    const a = available();
+    if (a) setWorldAspect(a.w / a.h);
+    setWorldWidth(WORLD.width);
+    fitFrame();
+    // snapshot before the bridge starts patching the store: the revive checkpoint
+    const levelStart = run && structuredClone(run);
     const canvas = canvasRef.current;
     if (!run || !canvas) return;
     let bridge: ReturnType<typeof attachBridge> | null = null;
@@ -67,10 +113,12 @@ function PlayPage() {
         const current = getRun();
         if (!current || !s.result) return;
         bridge?.flush();
-        const next = finishLevel(current, s.econ, s.result);
+        const next = finishLevel(current, s.econ, s.result, levelStart ?? undefined);
         setRun(next);
         if (next.phase === 'over') {
-          void deleteSave();
+          // keep the save while a revive can still bring the run back
+          if (next.checkpoint) void saveRun(next);
+          else void deleteSave();
           void navigate({ to: '/game-over' });
         } else {
           void saveRun(next);
@@ -94,7 +142,7 @@ function PlayPage() {
       patchSessionView({ active: false, paused: false, timeUp: false });
       if (window.__gm?.host === host) delete window.__gm;
     };
-  }, [navigate]);
+  }, [navigate, available, fitFrame]);
 
   const press = (a: Action) => hostRef.current?.press(a);
 
@@ -114,11 +162,20 @@ function PlayPage() {
   };
 
   return (
-    <div className="play-root">
+    <div className="play-root" ref={rootRef}>
       <div className="rotate-hint">横屏体验更佳 ↻</div>
-      <div className="frame" onPointerDown={pc ? undefined : tapField}>
+      <div
+        className="frame"
+        style={
+          frameSize
+            ? // --wu: screen px per world px, for overlays that must line up with the canvas art
+              ({ width: frameSize.w, height: frameSize.h, '--wu': `${frameSize.w / worldWidth}px` } as CSSProperties)
+            : undefined
+        }
+        onPointerDown={pc ? undefined : tapField}
+      >
         <canvas ref={canvasRef} />
-        {run && <ModuleBadges run={run} />}
+        {run && <ModuleBadges run={run} worldWidth={worldWidth} />}
         <Hud press={press} />
         {cheatOpen && !timeUp && (
           <CheatPanel
@@ -129,7 +186,7 @@ function PlayPage() {
         )}
         {timeUp && (
           <div className="overlay" style={{ background: 'rgba(10,5,2,0.35)' }}>
-            <div className={`timeup ${passed ? '' : 'fail'}`}>{passed ? '过关！' : '时间到'}</div>
+            <div className={`timeup ${passed ? '' : 'fail'}`}>{passed ? '你过关！' : '时间到！'}</div>
           </div>
         )}
         {paused && !timeUp && (

@@ -38,19 +38,18 @@ export function Hud({ press }: { press: (a: Action) => void }) {
     <div className="hud">
       <div className="hud-top">
         <div className="hud-box">
-          <div className="hud-money">${econ.wallet.toLocaleString()}</div>
-          <div className="hud-line">
-            <span>目标</span>
-            <span style={{ color: reached ? 'var(--green)' : undefined }}>
-              ${view.target.toLocaleString()} {reached ? '✓' : ''}
+          <div className="hud-row">
+            <span className="hud-money">${econ.wallet.toLocaleString()}</span>
+            <span className="hud-sub" title="本关收入">
+              +${view.earned.toLocaleString()}
+            </span>
+            <span className="hud-target" style={{ color: reached ? 'var(--green)' : undefined }}>
+              目标 ${view.target.toLocaleString()}
+              {reached ? ' ✓' : ''}
             </span>
           </div>
           <div className="bar">
             <i style={{ width: `${progress}%`, background: reached ? 'var(--green)' : undefined }} />
-          </div>
-          <div className="hud-line small" style={{ fontSize: '1.1cqw', color: 'var(--muted)' }}>
-            <span>本关收入</span>
-            <span>${view.earned.toLocaleString()}</span>
           </div>
         </div>
 
@@ -63,19 +62,20 @@ export function Hud({ press }: { press: (a: Action) => void }) {
         </div>
 
         <div className="hud-box" style={{ alignItems: 'flex-end' }}>
-          <div className={`hud-time ${view.remaining <= 10 ? 'low' : ''}`}>⏱ {view.remaining}</div>
-          <div className="hud-line">
-            <span>第 {view.level} 关</span>
+          <div className="hud-row">
+            <span className="hud-sub">第 {view.level} 关</span>
+            <span className={`hud-time ${view.remaining <= 10 ? 'low' : ''}`}>⏱ {view.remaining}</span>
+          </div>
+          <div className="hud-row hud-sub">
             <Tip content={<BombDetail />} placement="bottom">
               <span style={{ pointerEvents: 'auto' }}>💣 × {econ.bombs}</span>
             </Tip>
+            {!duo && econ.players[0] && (
+              <span>
+                Lv{econ.players[0].lv} · +{view.xp.p1 ?? 0} xp
+              </span>
+            )}
           </div>
-          {!duo && econ.players[0] && (
-            <div className="hud-line" style={{ fontSize: '1.1cqw', color: 'var(--muted)' }}>
-              <span>Lv{econ.players[0].lv}</span>
-              <span>+{view.xp.p1 ?? 0} xp</span>
-            </div>
-          )}
         </div>
       </div>
 

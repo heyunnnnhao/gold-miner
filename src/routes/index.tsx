@@ -12,7 +12,7 @@ import { continueGame, newGame, ROUTE_FOR_PHASE } from '@/ui/flow';
 
 export const Route = createFileRoute('/')({ component: Menu });
 
-const PHASE_LABEL = { level: '关卡开始前', result: '关卡结算', shop: '商店', prep: '整备', over: '已结束' } as const;
+const PHASE_LABEL = { level: '关卡开始前', result: '关卡结算', shop: '商店', prep: '整备', over: '失败 · 可复活' } as const;
 
 function Menu() {
   const navigate = useNavigate();
@@ -21,7 +21,8 @@ function Menu() {
   const [busy, setBusy] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const pc = useIsPc();
-  const saved = save.data?.run.phase !== 'over' ? save.data : null;
+  // a failed run stays resumable only while it can still be revived
+  const saved = save.data && (save.data.run.phase !== 'over' || save.data.run.checkpoint) ? save.data : null;
 
   const start = async (mode: 'solo' | 'duo') => {
     if (saved && !window.confirm('开始新游戏会覆盖当前存档，确定吗？')) return;

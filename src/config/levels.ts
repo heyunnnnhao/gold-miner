@@ -16,6 +16,18 @@ export const soloTarget = (n: number): number =>
 export const levelTarget = (n: number, mode: Mode): number =>
   mode === 'duo' ? Math.round(soloTarget(n) * GLOBAL.duoTargetMul) : soloTarget(n);
 
+/**
+ * Map generation knobs. Mutable only so the balance simulator can try other values
+ * (`npm run sim -- --budget 2.4`).
+ */
+export const MAP_GEN = {
+  /** total value of the gold / gems on a map ≈ this × the gold the level needs to add (× duoSpawnMul in duo) */
+  budgetRatio: 2.2,
+  /** valuable pieces on a solo map (rocks, bones, TNT and animals not counted); duo gets × duoCountMul */
+  maxValuables: (n: number) => Math.min(10 + Math.round(n * 1.5), 26),
+  duoCountMul: 1.4,
+};
+
 /** 0 on level 1, then +1 every two levels, capped at 8. */
 export const creatureCount = (n: number): number => (n <= 1 ? 0 : Math.min(Math.floor((n + 1) / 2), 8));
 
@@ -25,6 +37,7 @@ export const UNLOCKS: { level: number; minerals?: MineralId[]; creatures?: Creat
   { level: 2, creatures: ['pig'] },
   { level: 3, minerals: ['mystery-bag', 'gold-xl'] },
   { level: 4, minerals: ['diamond'] },
+  { level: 4, creatures: ['hedgehog'] },
   { level: 5, minerals: ['tnt'], creatures: ['diamond-pig'] },
   { level: 6, minerals: ['ruby'] },
 ];

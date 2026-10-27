@@ -3,7 +3,7 @@ import { useSelector } from '@tanstack/react-store';
 import { levelTarget } from '@/config/levels';
 import type { BuffId, ItemId } from '@/content/ids';
 import type { ShopOffer } from '@/game/state';
-import { buyOffer, enterPrep } from '@/stores/actions/run-actions';
+import { buyOffer, enterPrep, moduleCopies } from '@/stores/actions/run-actions';
 import { runStore } from '@/stores/run';
 import { audio } from '@/ui/audio';
 import { Money, useToast } from '@/ui/components';
@@ -36,9 +36,15 @@ function ShopPage() {
         ? (run.items[o.ref as ItemId] ?? 0)
         : o.kind === 'bomb'
           ? run.bombs
-          : run.buffs.includes(o.ref as BuffId)
-            ? 1
-            : 0;
+          : o.kind === 'revive'
+            ? run.revives
+            : run.buffs.includes(o.ref as BuffId)
+              ? 1
+              : 0;
+
+  const moduleCapped = (o: ShopOffer) =>
+    (o.kind === 'module' && moduleCopies(run, o.ref) >= run.players.length) ||
+    (o.kind === 'revive' && run.revives >= 1);
 
   const leave = () => {
     const err = dispatchAndSave(enterPrep);
@@ -65,12 +71,14 @@ function ShopPage() {
           [
             [
               '本关货架',
-              '炸弹、主动道具和被动效果，每关随机上架',
+              '炸弹、复活常驻；主动道具和被动效果每关随机上架',
               run.shop.offers.filter((o) => o.kind !== 'module'),
             ],
             [
               '钩子模块',
-              '常驻出售；在整备页装到钩子上，每个钩子最多 3 个',
+              run.players.length > 1
+                ? '常驻出售；在整备页装到钩子上，每个钩子最多 3 个；每种模块最多 2 个（每人一个）'
+                : '常驻出售；在整备页装到钩子上，最多 3 个；每种模块只能有 1 个，出售后才能再买',
               run.shop.offers.filter((o) => o.kind === 'module'),
             ],
           ] as const
@@ -87,7 +95,8 @@ function ShopPage() {
                 const cant =
                   soldOut ||
                   run.wallet < o.price ||
-                  (o.kind === 'buff' && run.buffs.includes(o.ref as BuffId));
+                  (o.kind === 'buff' && run.buffs.includes(o.ref as BuffId)) ||
+                  moduleCapped(o);
                 return (
                   <div key={o.id} className={`card ${cant ? 'disabled' : ''}`}>
                     <div className="row">
@@ -105,7 +114,13 @@ function ShopPage() {
                       </span>
                     </div>
                     <button className="btn" disabled={cant} onClick={() => buy(o.id)}>
-                      {soldOut ? '售罄' : '购买'}
+                      {soldOut
+                        ? '售罄'
+                        : moduleCapped(o)
+                          ? o.kind === 'module' && run.players.length > 1
+                            ? '已有 2 个'
+                            : '已拥有'
+                          : '购买'}
                     </button>
                   </div>
                 );

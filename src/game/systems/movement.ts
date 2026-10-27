@@ -2,7 +2,6 @@ import { WORLD } from '@/config/global';
 import type { SessionCtx } from '../defs';
 import { R } from '../registries';
 
-const GATHER_POINT = { x: WORLD.width / 2, y: (WORLD.mineTop + WORLD.mineBottom) / 2 };
 
 /** Creature movement. Global states (frozen / gather) override individual behaviors. */
 export function updateCreatures(s: SessionCtx, dt: number): void {
@@ -10,8 +9,8 @@ export function updateCreatures(s: SessionCtx, dt: number): void {
   for (const e of s.entities) {
     if (e.kind !== 'creature' || !e.alive || e.grabbedBy) continue;
     if (s.status.gather > 0) {
-      const dx = GATHER_POINT.x - e.pos.x;
-      const dy = GATHER_POINT.y - e.pos.y;
+      const dx = WORLD.width / 2 - e.pos.x;
+      const dy = (WORLD.mineTop + WORLD.mineBottom) / 2 - e.pos.y;
       const d = Math.hypot(dx, dy);
       if (d > 30) {
         const step = Math.min(d - 30, e.speed * 1.6 * dt);

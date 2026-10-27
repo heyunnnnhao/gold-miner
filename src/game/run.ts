@@ -8,6 +8,13 @@ import { R } from './registries';
 import type { Economy } from './defs';
 import type { LevelResult, PlayerId, PlayerState, RunState } from './state';
 
+/** Spends a revive: the run goes back to the start of the failed level. */
+export function revive(run: RunState): RunState | null {
+  const cp = run.checkpoint;
+  if (run.phase !== 'over' || !cp || cp.revives <= 0) return null;
+  return { ...structuredClone(cp), revives: cp.revives - 1, phase: 'level', checkpoint: null };
+}
+
 export function createPlayer(id: PlayerId): PlayerState {
   return {
     id,
@@ -28,6 +35,7 @@ export function createRun(mode: Mode, seed: number): RunState {
     level: 1,
     wallet: GLOBAL.startingWallet,
     bombs: GLOBAL.startingBombs,
+    revives: 0,
     items: {},
     buffs: [],
     hotbar: Array.from({ length: GLOBAL.hotbarSize }, () => null),
@@ -38,6 +46,7 @@ export function createRun(mode: Mode, seed: number): RunState {
     shop: null,
     lastResult: null,
     totalEarned: 0,
+    checkpoint: null,
   };
 }
 
@@ -55,9 +64,23 @@ export function rollTalentChoices(run: RunState, player: PlayerState, atLevel: n
   return out;
 }
 
-/** Applies a finished level to the run: economy, xp / level-ups / talent picks, next phase. */
-export function finishLevel(run: RunState, econ: Economy, result: LevelResult): RunState {
+/**
+ * Applies a finished level to the run: economy, xp / level-ups / talent picks, next phase.
+ * `levelStart` is the run as it was when the level began; on failure with a revive in stock it is
+ * kept as a checkpoint so the level can be replayed.
+ */
+export function finishLevel(
+  run: RunState,
+  econ: Economy,
+  result: LevelResult,
+  levelStart?: RunState,
+): RunState {
   const next: RunState = structuredClone(run);
+  next.checkpoint = null;
+  if (!result.passed && levelStart && levelStart.revives > 0) {
+    const { checkpoint: _drop, ...start } = structuredClone(levelStart);
+    next.checkpoint = start;
+  }
   next.wallet = econ.wallet;
   next.bombs = econ.bombs;
   next.items = { ...econ.items };

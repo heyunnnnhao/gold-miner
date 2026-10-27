@@ -13,18 +13,18 @@ export const diamond: MineralDef = {
   depth: [0.5, 1],
 };
 
-/** Rarer and pricier than diamonds; only deep in the mine from level 6. */
+/** Much rarer and pricier than diamonds; only at the very bottom of the mine from level 6. */
 export const ruby: MineralDef = {
   id: 'ruby',
   name: '红宝石',
-  value: 900,
+  value: 1200,
   weight: 1,
   radius: 12,
   tags: ['ruby', 'gem'],
   sprite: 'ruby',
   color: '#c41240',
-  spawnWeight: (n) => 0.2 + n * 0.1,
-  depth: [0.65, 1],
+  spawnWeight: (n) => 0.1 + n * 0.05,
+  depth: [0.8, 1],
 };
 
 export const bone: MineralDef = {

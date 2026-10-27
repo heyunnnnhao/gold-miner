@@ -3,16 +3,21 @@ import { R, freezeRegistries } from '@/game/registries';
 import { patrol } from './behaviors/patrol';
 import { blastHelmet } from './items/blast-helmet';
 import { clover, polish, rockBook, strength } from './buffs/buffs';
+import { hedgehog } from './creatures/hedgehog';
 import { diamondPig, pig } from './creatures/pig';
 import { contract, steadyRope, treasureMap } from './buffs/more-buffs';
 import { aimLine } from './hook-traits/aim-line';
 import { appraise } from './hook-traits/appraise';
 import { magnetPull } from './hook-traits/magnet-pull';
+import { heavyLift, lucky, quickReturn, thickGlove } from './hook-traits/more-traits';
 import { pierceRock } from './hook-traits/pierce-rock';
 import { adrenaline } from './items/adrenaline';
 import { defuse } from './items/defuse';
 import { goldRain } from './items/gold-rain';
 import { luckyCoin } from './items/lucky-coin';
+import { doubleCard } from './items/double-card';
+import { midas } from './items/midas';
+import { rockBlast } from './items/rock-blast';
 import { killPath } from './hook-traits/kill-path';
 import { MODULES } from './modules/modules';
 import { freeze } from './items/freeze';
@@ -36,7 +41,7 @@ export function registerAllContent(): void {
 
   for (const m of [goldS, goldM, goldL, goldXl, rockS, rockL, diamond, ruby, bone, mysteryBag, tnt, debris])
     R.minerals.register(m);
-  for (const c of [pig, diamondPig]) R.creatures.register(c);
+  for (const c of [pig, diamondPig, hedgehog]) R.creatures.register(c);
   R.behaviors.register(patrol);
   for (const i of [
     freeze,
@@ -49,12 +54,16 @@ export function registerAllContent(): void {
     defuse,
     goldRain,
     luckyCoin,
+    rockBlast,
+    midas,
+    doubleCard,
   ])
     R.items.register(i);
   for (const b of [strength, clover, rockBook, polish, steadyRope, treasureMap, contract])
     R.buffs.register(b);
   for (const m of MODULES) R.modules.register(m);
-  for (const t of [aimLine, killPath, pierceRock, appraise, magnetPull]) R.hookTraits.register(t);
+  for (const t of [aimLine, killPath, pierceRock, appraise, magnetPull, quickReturn, heavyLift, thickGlove, lucky])
+    R.hookTraits.register(t);
   for (const t of TALENTS) R.talents.register(t);
 
   freezeRegistries();

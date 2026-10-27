@@ -18,26 +18,26 @@ export const CHEATS: Cheat[] = [
   { id: 'items-1', icon: '🎒', label: '道具各 +1', desc: '每种主动道具各 +1，并放入快捷栏空位' },
 ];
 
-const banner = { x: WORLD.width / 2, y: WORLD.groundY + 60 };
+const banner = () => ({ x: WORLD.width / 2, y: WORLD.groundY + 60 });
 
 export function runCheat(s: LevelSession, id: CheatId): void {
   if (s.ended) return;
   switch (id) {
     case 'gold-1k':
-      s.addGold(1000, banner);
+      s.addGold(1000, banner());
       break;
     case 'gold-10k':
-      s.addGold(10000, banner);
+      s.addGold(10000, banner());
       break;
     case 'pass': {
       const missing = s.target - s.econ.wallet;
-      if (missing > 0) s.addGold(missing, banner);
+      if (missing > 0) s.addGold(missing, banner());
       s.end();
       break;
     }
     case 'time-10':
       s.timer.add(10);
-      s.floatText(banner, '+10 秒', '#8fe3ff');
+      s.floatText(banner(), '+10 秒', '#8fe3ff');
       break;
     case 'bombs-3':
       s.addBombs(3);

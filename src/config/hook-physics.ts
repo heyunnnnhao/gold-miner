@@ -11,11 +11,13 @@ export const HOOK_PHYSICS = {
   emptyRetractSpeed: 900,
   /** collision radius of the claw tip */
   tipRadius: 14,
-  /** rope length while swinging (from the reel, so the claw hangs just below the ground) */
-  restLength: 46,
-  maxLength: Math.hypot(WORLD.width / 2, WORLD.height - WORLD.groundY + 30) + 40,
+  /** rope length while swinging (from the reel; short, so the idle claw hangs close to the miner) */
+  restLength: 34,
   /** the swing pivot is the miner's reel, 24 px above the ground line; rope, claw and path all start here */
   pivotOffsetY: -24,
   magnetRadius: 120,
   tntRadius: 130,
 } as const;
+
+/** Longest rope: enough to reach the far bottom corner from the middle of the current world. */
+export const maxRopeLength = (): number => Math.hypot(WORLD.width * 0.7, WORLD.height - WORLD.groundY + 30) + 40;

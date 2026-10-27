@@ -5,7 +5,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { HOOK_PHYSICS } from '@/config/hook-physics';
 import type { Action } from '@/config/keys';
-import { levelTarget, TARGET_CURVE, type Mode } from '@/config/levels';
+import { levelTarget, MAP_GEN, TARGET_CURVE, type Mode } from '@/config/levels';
 import { STEP } from '@/core/loop';
 import { createRng } from '@/core/rng';
 import { registerAllContent } from '@/content';
@@ -37,6 +37,7 @@ const MODE = arg('mode', 'solo') as Mode;
 const SHOP = arg('shop', 'greedy') as 'none' | 'greedy';
 const SKILL = Number(arg('skill', '1'));
 TARGET_CURVE.quad = Number(arg('quad', String(TARGET_CURVE.quad)));
+MAP_GEN.budgetRatio = Number(arg('budget', String(MAP_GEN.budgetRatio)));
 const idleRng = createRng(777);
 const idleUntil = new Map<string, number>();
 
@@ -168,7 +169,7 @@ for (let i = 0; i < RUNS; i++) {
 }
 
 const lines = ['level,target,reached,pass_rate,avg_earned,avg_increment,earned_over_increment,avg_lv'];
-console.log(`mode=${MODE} shop=${SHOP} skill=${SKILL} quad=${TARGET_CURVE.quad} runs=${RUNS} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+console.log(`mode=${MODE} shop=${SHOP} skill=${SKILL} quad=${TARGET_CURVE.quad} budget=${MAP_GEN.budgetRatio} runs=${RUNS} (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
 console.log('lvl  target   reached  pass%   earned   need+   ratio  avgLv');
 rows.forEach((r, i) => {
   const n = i + 1;

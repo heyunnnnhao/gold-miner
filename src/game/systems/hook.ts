@@ -1,5 +1,5 @@
 import { WORLD } from '@/config/global';
-import { HOOK_PHYSICS } from '@/config/hook-physics';
+import { HOOK_PHYSICS, maxRopeLength } from '@/config/hook-physics';
 import { XP_TAG_BONUS, XP_VALUE_RATIO } from '@/config/progression';
 import { circlesOverlap, degToRad, dist2, type Vec2 } from '@/core/math';
 import type { Entity, HookRuntime, PlayerRuntime, SessionCtx } from '../defs';
@@ -35,6 +35,10 @@ export function retractSpeed(p: PlayerRuntime, s: SessionCtx): number {
 export function dropHook(p: PlayerRuntime, s: SessionCtx): boolean {
   const h = p.hook;
   if (h.state !== 'swing') return false;
+  if (p.stun > 0) {
+    s.sfx('error');
+    return false;
+  }
   h.state = 'extend';
   s.events.emit('hook:drop', { player: p.id, hook: h });
   s.sfx('drop');
@@ -59,6 +63,7 @@ export function bombHook(p: PlayerRuntime, s: SessionCtx): boolean {
 
 export function updateHook(p: PlayerRuntime, s: SessionCtx, dt: number): void {
   const h = p.hook;
+  if (p.stun > 0) p.stun = Math.max(0, p.stun - dt);
   switch (h.state) {
     case 'swing': {
       const omega = ((2 * Math.PI) / HOOK_PHYSICS.swingPeriod) * s.compute('swingSpeed', 1, { player: p });
@@ -76,7 +81,7 @@ export function updateHook(p: PlayerRuntime, s: SessionCtx, dt: number): void {
       if (hit) {
         grab(p, s, hit);
         h.state = 'retract';
-      } else if (tip.x < 0 || tip.x > WORLD.width || tip.y > WORLD.height || h.length >= HOOK_PHYSICS.maxLength) {
+      } else if (tip.x < 0 || tip.x > WORLD.width || tip.y > WORLD.height || h.length >= maxRopeLength()) {
         if (p.magnet) attract(p, s, tip);
         h.state = 'retract';
       }
@@ -184,6 +189,7 @@ function settle(p: PlayerRuntime, s: SessionCtx): void {
     p.xpGained += xp;
     if (value > 0) s.addGold(value, { x: p.minerX, y: WORLD.groundY - 30 });
     if (crit) s.floatText({ x: p.minerX, y: WORLD.groundY - 60 }, '暴击！', '#ff5a5a');
+    if (e.kind === 'creature') R.creatures.get(e.defId).onCaught?.(e, s, p);
     s.events.emit('hook:settle', { player: p.id, entity: e, value, xp, crit });
     s.events.emit('player:xp', { player: p.id, xpGained: p.xpGained });
     s.sfx(value >= 300 ? 'cash-big' : value > 20 ? 'cash' : 'clunk');

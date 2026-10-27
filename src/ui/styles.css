@@ -452,19 +452,29 @@ table.keys td {
 /* ---------- play screen ---------- */
 
 .play-root {
+  /* exactly the visible area (see ui/viewport.ts), minus notches / home indicator */
   position: fixed;
-  inset: 0;
+  left: 0;
+  top: 0;
+  width: var(--app-w, 100vw);
+  height: var(--app-h, 100dvh);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   background: #050608;
 }
 
 .frame {
   position: relative;
-  width: min(100vw, calc(100vh * 16 / 9));
-  aspect-ratio: 16 / 9;
+  /* sized in JS to the world's aspect ratio; this is only the first-paint fallback */
+  width: 100%;
+  height: 100%;
   container-type: size;
+  /* HUD unit: 1% of a 16:9 frame's width, but never bigger than the height allows on wide screens */
+  --u: min(1cqw, 1.7778cqh);
   overflow: hidden;
   user-select: none;
   touch-action: none;
@@ -483,50 +493,70 @@ table.keys td {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  font-size: 1.45cqw;
+  font-size: calc(1.45 * var(--u));
 }
 
 .hud-top {
   position: absolute;
-  top: 1.2cqw;
-  left: 1.2cqw;
-  right: 1.2cqw;
+  top: calc(0.7 * var(--u));
+  left: calc(1.2 * var(--u));
+  right: calc(1.2 * var(--u));
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1cqw;
+  gap: calc(1 * var(--u));
 }
 
 .hud-box {
   /* sits on the bright yellow top bar, so keep it nearly opaque */
   background: rgba(11, 13, 19, 0.88);
-  border: 0.08cqw solid var(--line-strong);
-  border-radius: 1cqw;
-  padding: 0.7cqw 1.1cqw;
+  border: calc(0.08 * var(--u)) solid var(--line-strong);
+  border-radius: calc(1 * var(--u));
+  padding: calc(0.4 * var(--u)) calc(0.9 * var(--u)) calc(0.5 * var(--u));
   display: flex;
   flex-direction: column;
-  gap: 0.35cqw;
-  min-width: 14cqw;
-  box-shadow: 0 0.8cqw 2cqw rgba(0, 0, 0, 0.35);
+  gap: calc(0.3 * var(--u));
+  min-width: calc(16 * var(--u));
+  box-shadow: 0 calc(0.8 * var(--u)) calc(2 * var(--u)) rgba(0, 0, 0, 0.35);
+}
+
+.hud-row {
+  display: flex;
+  align-items: baseline;
+  gap: calc(0.9 * var(--u));
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-sub {
+  font-size: calc(1.15 * var(--u));
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.hud-target {
+  margin-left: auto;
+  font-size: calc(1.2 * var(--u));
+  font-weight: 700;
 }
 
 .hud-line {
   display: flex;
   justify-content: space-between;
-  gap: 1.2cqw;
+  gap: calc(1.2 * var(--u));
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .hud-money {
   color: var(--gold-hi);
-  font-size: 2.3cqw;
+  font-size: calc(1.9 * var(--u));
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
 .hud-time {
-  font-size: 2.3cqw;
+  font-size: calc(1.9 * var(--u));
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -543,49 +573,49 @@ table.keys td {
 }
 
 .hud .bar {
-  height: 0.5cqw;
+  height: calc(0.5 * var(--u));
 }
 
 .hud-effects {
   display: flex;
-  gap: 0.5cqw;
+  gap: calc(0.5 * var(--u));
   flex-wrap: wrap;
 }
 
 .hud-chip {
   background: rgba(11, 13, 19, 0.88);
-  border: 0.08cqw solid var(--line-strong);
+  border: calc(0.08 * var(--u)) solid var(--line-strong);
   color: var(--gold-hi);
   border-radius: 999px;
-  padding: 0.15cqw 0.9cqw;
-  font-size: 1.15cqw;
+  padding: calc(0.15 * var(--u)) calc(0.9 * var(--u));
+  font-size: calc(1.15 * var(--u));
   font-weight: 600;
 }
 
 .hotbar {
   position: absolute;
-  bottom: 1cqw;
+  bottom: calc(1 * var(--u));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 0.5cqw;
-  padding: 0.5cqw;
-  border-radius: 1.2cqw;
+  gap: calc(0.5 * var(--u));
+  padding: calc(0.5 * var(--u));
+  border-radius: calc(1.2 * var(--u));
   background: rgba(8, 9, 13, 0.6);
-  border: 0.08cqw solid var(--line);
+  border: calc(0.08 * var(--u)) solid var(--line);
 }
 
 .slot {
   position: relative;
-  width: 4.2cqw;
-  height: 4.2cqw;
-  border-radius: 0.7cqw;
+  width: calc(4.2 * var(--u));
+  height: calc(4.2 * var(--u));
+  border-radius: calc(0.7 * var(--u));
   background: rgba(255, 255, 255, 0.06);
-  border: 0.08cqw solid var(--line-strong);
+  border: calc(0.08 * var(--u)) solid var(--line-strong);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.1cqw;
+  font-size: calc(2.1 * var(--u));
 }
 
 .slot.empty {
@@ -595,21 +625,21 @@ table.keys td {
 
 .slot .key {
   position: absolute;
-  top: 0.15cqw;
-  left: 0.4cqw;
-  font-size: 0.9cqw;
+  top: calc(0.15 * var(--u));
+  left: calc(0.4 * var(--u));
+  font-size: calc(0.9 * var(--u));
   font-weight: 700;
   color: var(--muted);
 }
 
 .slot .count {
   position: absolute;
-  bottom: 0.1cqw;
-  right: 0.4cqw;
-  font-size: 1.05cqw;
+  bottom: calc(0.1 * var(--u));
+  right: calc(0.4 * var(--u));
+  font-size: calc(1.05 * var(--u));
   font-weight: 800;
   color: var(--gold-hi);
-  text-shadow: 0 0 0.3cqw #000;
+  text-shadow: 0 0 calc(0.3 * var(--u)) #000;
 }
 
 .overlay {
@@ -633,14 +663,16 @@ table.keys td {
 }
 
 .timeup {
-  font-size: 7cqw;
+  font-size: calc(7 * var(--u));
   font-weight: 900;
   letter-spacing: 0.1em;
+  /* letter-spacing also trails the last glyph, which pulls the text left; this re-centres it */
+  padding-left: 1em;
   background: linear-gradient(180deg, #fff3d2, var(--gold) 60%, var(--gold-lo));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 calc(0.6 * var(--u)) calc(1.4 * var(--u)) rgba(0, 0, 0, 0.6));
   animation: pop 0.35s ease-out;
 }
 
@@ -1092,19 +1124,19 @@ table.keys td {
   padding: 0;
   color: inherit;
   font: inherit;
-  font-size: 2.1cqw;
+  font-size: calc(2.1 * var(--u));
 }
 
 .touch-btn {
   position: absolute;
-  bottom: 1.2cqw;
-  width: 8cqw;
-  height: 8cqw;
+  bottom: calc(1.2 * var(--u));
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
   border-radius: 50%;
-  border: 0.15cqw solid var(--line-strong);
+  border: calc(0.15 * var(--u)) solid var(--line-strong);
   background: rgba(11, 13, 19, 0.75);
   color: var(--text);
-  font-size: 3.4cqw;
+  font-size: calc(3.4 * var(--u));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1113,7 +1145,7 @@ table.keys td {
 }
 
 .touch-btn small {
-  font-size: 1.1cqw;
+  font-size: calc(1.1 * var(--u));
   font-weight: 700;
   color: var(--gold-hi);
 }
@@ -1124,25 +1156,26 @@ table.keys td {
 }
 
 .touch-btn.left {
-  left: 1.2cqw;
+  left: calc(1.2 * var(--u));
 }
 
 .touch-btn.right {
-  right: 1.2cqw;
+  right: calc(1.2 * var(--u));
 }
 
+/* tucked against the right edge, just under the time box, away from the play area */
 .touch-pause {
   position: absolute;
-  top: 1.2cqw;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5cqw;
-  height: 5cqw;
-  font-size: 2cqw;
+  top: calc(7.4 * var(--u));
+  bottom: auto;
+  right: calc(1.2 * var(--u));
+  width: calc(4.6 * var(--u));
+  height: calc(4.6 * var(--u));
+  font-size: calc(1.9 * var(--u));
 }
 
 .touch-pause:active {
-  transform: translateX(-50%) scale(0.94);
+  transform: scale(0.94);
 }
 
 .rotate-hint {
@@ -1192,27 +1225,27 @@ table.keys td {
 
 /* ---------- module chips next to the miner ---------- */
 
+/* placed in game coordinates (see ModuleBadges) and sized in world px via --wu, so they stay glued to the miner */
 .module-badges {
   position: absolute;
   display: flex;
-  gap: 0.35cqw;
+  gap: calc(4 * var(--wu, 1px));
   transform: translateY(-50%);
   pointer-events: auto;
-  z-index: 2;
 }
 
 .module-badge {
-  width: 2.6cqw;
-  height: 2.6cqw;
+  width: calc(30 * var(--wu, 1px));
+  height: calc(30 * var(--wu, 1px));
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5cqw;
+  font-size: calc(17 * var(--wu, 1px));
   line-height: 1;
   background: rgba(11, 13, 19, 0.85);
-  border: 0.1cqw solid var(--line-strong);
-  box-shadow: 0 0.3cqw 0.8cqw rgba(0, 0, 0, 0.4);
+  border: calc(1.5 * var(--wu, 1px)) solid var(--line-strong);
+  box-shadow: 0 calc(3 * var(--wu, 1px)) calc(8 * var(--wu, 1px)) rgba(0, 0, 0, 0.4);
   cursor: help;
 }
 
@@ -1224,36 +1257,36 @@ table.keys td {
 
 .cheat-panel {
   position: absolute;
-  top: 9cqw;
+  top: calc(9 * var(--u));
   left: 50%;
   transform: translateX(-50%);
   z-index: 20;
-  width: min(46cqw, 92%);
-  padding: 1.2cqw 1.4cqw;
-  border-radius: 1.2cqw;
+  width: min(calc(46 * var(--u)), 92%);
+  padding: calc(1.2 * var(--u)) calc(1.4 * var(--u));
+  border-radius: calc(1.2 * var(--u));
   background: rgba(14, 16, 22, 0.96);
-  border: 0.1cqw solid var(--line-strong);
-  box-shadow: 0 1.5cqw 4cqw rgba(0, 0, 0, 0.55);
+  border: calc(0.1 * var(--u)) solid var(--line-strong);
+  box-shadow: 0 calc(1.5 * var(--u)) calc(4 * var(--u)) rgba(0, 0, 0, 0.55);
   pointer-events: auto;
-  font-size: 1.3cqw;
+  font-size: calc(1.3 * var(--u));
 }
 
 .cheat-head {
   display: flex;
   align-items: center;
-  gap: 1cqw;
-  margin-bottom: 1cqw;
+  gap: calc(1 * var(--u));
+  margin-bottom: calc(1 * var(--u));
 }
 
 .cheat-head strong {
   color: var(--gold-hi);
-  font-size: 1.6cqw;
+  font-size: calc(1.6 * var(--u));
 }
 
 .cheat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.8cqw;
+  gap: calc(0.8 * var(--u));
 }
 
 .cheat-btn {
@@ -1261,14 +1294,14 @@ table.keys td {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6cqw;
-  padding: 0.9cqw 0.6cqw;
-  border-radius: 0.9cqw;
-  border: 0.1cqw solid var(--line-strong);
+  gap: calc(0.6 * var(--u));
+  padding: calc(0.9 * var(--u)) calc(0.6 * var(--u));
+  border-radius: calc(0.9 * var(--u));
+  border: calc(0.1 * var(--u)) solid var(--line-strong);
   background: rgba(214, 178, 102, 0.08);
   color: var(--text);
   font-weight: 700;
-  font-size: 1.35cqw;
+  font-size: calc(1.35 * var(--u));
   cursor: pointer;
   transition:
     background-color 0.15s,
@@ -1285,5 +1318,5 @@ table.keys td {
 }
 
 .cheat-icon {
-  font-size: 1.7cqw;
+  font-size: calc(1.7 * var(--u));
 }

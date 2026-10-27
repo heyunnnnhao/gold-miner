@@ -22,7 +22,7 @@ import type {
 } from './defs';
 import type { GameEvents } from './events';
 import { generateLevel, levelBudget } from './level/generator';
-import { MODES } from './modes';
+import { MODES, minerX } from './modes';
 import { createPlayerRuntime } from './player/player';
 import { R } from './registries';
 import type { LevelResult, PlayerId, RunState } from './state';
@@ -91,7 +91,7 @@ export class LevelSession implements SessionCtx {
     this.players = mode.miners.map((m, i) => {
       const state = run.players.find((p) => p.id === m.player);
       if (!state) throw new Error(`missing player ${m.player}`);
-      return createPlayerRuntime(run, state, m.x, i);
+      return createPlayerRuntime(run, state, minerX(m), i);
     });
 
     // global layer: passive buffs bought for this level

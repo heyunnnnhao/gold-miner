@@ -1,5 +1,5 @@
 import { shopSlots } from '@/config/global';
-import { BOMB_BASE_PRICE, BOMB_STOCK, shopPrice } from '@/config/shop';
+import { BOMB_BASE_PRICE, BOMB_STOCK, REVIVE_PRICE, shopPrice } from '@/config/shop';
 import { createRng } from '@/core/rng';
 import { R } from './registries';
 import type { RunState, ShopOffer, ShopState } from './state';
@@ -27,6 +27,8 @@ export function generateShop(run: RunState): ShopState {
     pool.splice(pool.indexOf(pick), 1);
     offers.push({ id: `${pick.kind}:${pick.ref}`, kind: pick.kind, ref: pick.ref, price: shopPrice(pick.basePrice, n, rng), stock: 1 });
   }
+
+  offers.push({ id: 'revive', kind: 'revive', ref: 'revive', price: REVIVE_PRICE, stock: null });
 
   // hook modules have fixed prices and are always on sale
   for (const m of R.modules.all()) {

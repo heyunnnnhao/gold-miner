@@ -7,11 +7,13 @@ import { loadImages } from '@/core/assets';
 import { queryClient } from '@/persistence/queries';
 import { installAudioUnlock } from '@/ui/audio';
 import { IMAGE_MANIFEST } from '@/ui/assets-manifest';
+import { installViewportVars } from '@/ui/viewport';
 import { routeTree } from './routeTree.gen';
 import '@/ui/styles.css';
 
 registerAllContent();
 installAudioUnlock();
+installViewportVars();
 void loadImages(IMAGE_MANIFEST);
 
 // hash history: works on any static host without rewrite rules

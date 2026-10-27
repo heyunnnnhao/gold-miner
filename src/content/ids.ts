@@ -12,7 +12,7 @@ export type MineralId =
   | 'mystery-bag'
   | 'tnt'
   | 'debris';
-export type CreatureId = 'pig' | 'diamond-pig';
+export type CreatureId = 'pig' | 'diamond-pig' | 'hedgehog';
 export type BehaviorId = 'patrol';
 export type ItemId =
   | 'freeze'
@@ -24,11 +24,34 @@ export type ItemId =
   | 'adrenaline'
   | 'defuse'
   | 'gold-rain'
-  | 'lucky-coin';
+  | 'lucky-coin'
+  | 'rock-blast'
+  | 'midas'
+  | 'double-card';
 export type BuffId =
   'strength' | 'clover' | 'rock-book' | 'polish' | 'steady-rope' | 'treasure-map' | 'contract';
-export type ModuleId = 'saw' | 'claw' | 'swift' | 'pierce' | 'appraiser' | 'magnet' | 'scope';
-export type HookTraitId = 'aimLine' | 'killPath' | 'pierceRock' | 'appraise' | 'magnetPull';
+export type ModuleId =
+  | 'saw'
+  | 'claw'
+  | 'swift'
+  | 'pierce'
+  | 'appraiser'
+  | 'magnet'
+  | 'scope'
+  | 'spring'
+  | 'glove'
+  | 'winch'
+  | 'lucky';
+export type HookTraitId =
+  | 'aimLine'
+  | 'killPath'
+  | 'pierceRock'
+  | 'appraise'
+  | 'magnetPull'
+  | 'quickReturn'
+  | 'heavyLift'
+  | 'thickGlove'
+  | 'lucky';
 export type TalentId =
   | 'diamond-hunter'
   | 'rock-expert'

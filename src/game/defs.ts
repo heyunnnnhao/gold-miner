@@ -90,6 +90,8 @@ export type PlayerRuntime = {
   minerX: number;
   hook: HookRuntime;
   magnet: boolean;
+  /** seconds left during which this player can't drop the hook (e.g. pricked by a hedgehog) */
+  stun: number;
   xpGained: number;
   earned: number;
 };
@@ -165,6 +167,8 @@ export interface CreatureDef extends Visual {
   behaviors: readonly BehaviorId[];
   spawnWeight: (level: number) => number;
   onKilled?(e: CreatureEntity, s: SessionCtx): void;
+  /** called when a player reels this creature in */
+  onCaught?(e: CreatureEntity, s: SessionCtx, p: PlayerRuntime): void;
 }
 
 export interface BehaviorDef {

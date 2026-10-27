@@ -20,7 +20,7 @@ export type PlayerState = {
 
 export type ModuleInstance = { uid: string; defId: ModuleId };
 
-export type ShopOfferKind = 'bomb' | 'item' | 'buff' | 'module';
+export type ShopOfferKind = 'bomb' | 'revive' | 'item' | 'buff' | 'module';
 
 export type ShopOffer = {
   id: string;
@@ -54,6 +54,8 @@ export type RunState = {
   wallet: number;
   /** shared bomb pool */
   bombs: number;
+  /** shared revive charges: replay a failed level instead of game over */
+  revives: number;
   /** shared active items */
   items: Partial<Record<ItemId, number>>;
   /** passive buffs applied to the next level */
@@ -67,4 +69,8 @@ export type RunState = {
   shop: ShopState | null;
   lastResult: LevelResult | null;
   totalEarned: number;
+  /** the run as it was when the failed level started; set only on failure while a revive is owned */
+  checkpoint: Checkpoint | null;
 };
+
+export type Checkpoint = Omit<RunState, 'checkpoint'>;

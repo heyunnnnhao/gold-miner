@@ -8,11 +8,13 @@ import { R } from '../registries';
 import type { LevelSession } from '../session';
 import { FxState } from '../systems/fx';
 import { grabRadius, hookTip } from '../systems/hook';
-import { drawClaw, drawMiner, drawPig, drawStatic } from './sprites';
+import { drawClaw, drawHedgehog, drawMiner, drawPig, drawStatic } from './sprites';
 
 const SHIRTS: Record<string, string> = { p1: '#d9534f', p2: '#3b82c4' };
 /** distance from the claw's ring (where the rope ties on) to the centre of its grab circle, at scale 1 */
 const CLAW_RING = 10;
+/** how far (fraction of the claw art's height) the rope reaches into the claw's hinge */
+const CLAW_HINGE_OVERLAP = 0.2;
 /** drawn miner height; the reel sits at REEL_AT (fractions of the miner image) */
 const MINER_H = 68;
 const REEL_AT = { x: 0.2, y: 0.62 };
@@ -89,7 +91,8 @@ export class Renderer {
           g.fill();
         }
       } else {
-        drawPig(g, e.radius, this.time + e.uid, e.facing, e.tags.includes('diamond'), frozen);
+        if (def.sprite === 'hedgehog') drawHedgehog(g, e.radius, this.time + e.uid, e.facing, frozen);
+        else drawPig(g, e.radius, this.time + e.uid, e.facing, e.tags.includes('diamond'), frozen);
       }
     } else {
       const def = R.minerals.get(e.defId);
@@ -130,7 +133,16 @@ export class Renderer {
     const scale = r / HOOK_PHYSICS.tipRadius;
     // the pivot is the reel, so rope, claw and travel direction share one line
     const from = h.pivot;
-    const ring = { x: tip.x - Math.sin(h.angle) * CLAW_RING * scale, y: tip.y - Math.cos(h.angle) * CLAW_RING * scale };
+    const img = getImage('claw');
+    // the claw art is wider than tall; its width spans the grab circle
+    const clawW = r * 2;
+    const clawH = img ? (img.height / img.width) * clawW : 0;
+    // end the rope inside the claw's hinge (top of the art) so there's no gap between them
+    const ringDist = img ? clawH / 2 - clawH * CLAW_HINGE_OVERLAP : CLAW_RING * scale;
+    const ring = {
+      x: tip.x - Math.sin(h.angle) * ringDist,
+      y: tip.y - Math.cos(h.angle) * ringDist,
+    };
     g.strokeStyle = '#2d2116';
     g.lineWidth = 2.5;
     g.beginPath();
@@ -144,12 +156,8 @@ export class Renderer {
     g.save();
     g.translate(tip.x, tip.y);
     g.rotate(-h.angle);
-    const img = getImage('claw');
     if (img) {
-      // the claw art is wider than tall; its width spans the grab circle
-      const w = r * 2;
-      const hgt = (img.height / img.width) * w;
-      g.drawImage(img, -w / 2, -hgt / 2, w, hgt);
+      g.drawImage(img, -clawW / 2, -clawH / 2, clawW, clawH);
     } else {
       g.scale(scale, scale);
       g.translate(0, -CLAW_RING);
@@ -166,14 +174,22 @@ export class Renderer {
 
     const cheering = (this.cheerUntil[p.id] ?? 0) > this.time;
     const pulling = p.hook.state !== 'swing';
+    const stung = p.stun > 0;
     const frame = Math.floor(Math.abs(this.reel[p.id] ?? 0) * 0.8) % 4;
-    const img = cheering
-      ? getImage('miner-cheer')
-      : pulling
-        ? (getImage(`miner-pull-${frame}`) ?? getImage('miner'))
-        : getImage('miner');
+    // pricked: flick between poses every ~0.08 s and shake, so it reads as a flinch
+    const flick = Math.floor(this.time * 12) % 2 === 0;
+    const img = stung
+      ? flick
+        ? getImage('miner-cheer')
+        : getImage(`miner-pull-${Math.floor(this.time * 24) % 4}`)
+      : cheering
+        ? getImage('miner-cheer')
+        : pulling
+          ? (getImage(`miner-pull-${frame}`) ?? getImage('miner'))
+          : getImage('miner');
 
     g.save();
+    if (stung) g.translate(Math.sin(this.time * 70) * 2.5, 0);
     if (img) {
       const base = getImage('miner') ?? img;
       const k = MINER_H / base.height;
@@ -187,6 +203,12 @@ export class Renderer {
       g.translate(p.minerX, WORLD.groundY);
       drawMiner(g, SHIRTS[p.id] ?? '#d9534f', this.reel[p.id] ?? 0, pulling, this.time);
       g.translate(-p.minerX, -WORLD.groundY);
+    }
+    if (stung) {
+      g.font = `${flick ? 24 : 20}px system-ui, sans-serif`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText('💢', p.minerX + MINER_H * 0.55, WORLD.groundY - MINER_H - 2);
     }
     if (labelled) {
       g.font = '900 16px system-ui, sans-serif';
@@ -249,7 +271,7 @@ export class Renderer {
     const minerXs = s.players.map((p) => p.minerX);
     const top = getImage('bg-top');
     const mine = getImage(`bg-mine-${((s.level - 1) % 4) + 1}`);
-    const key = `${s.level}:${minerXs.join(',')}:${!!top && !!mine}`;
+    const key = `${s.level}:${WORLD.width}:${minerXs.join(',')}:${!!top && !!mine}`;
     if (this.bg?.key === key) return this.bg.canvas;
     const c = document.createElement('canvas');
     c.width = WORLD.width;
@@ -261,23 +283,48 @@ export class Renderer {
     return c;
   }
 
-  private paintArtBackground(g: CanvasRenderingContext2D, top: Sprite, mine: Sprite, minerXs: number[]): void {
+  private paintArtBackground(
+    g: CanvasRenderingContext2D,
+    top: Sprite,
+    mine: Sprite,
+    minerXs: number[],
+  ): void {
     const gy = WORLD.groundY;
-    // mine: cover the width, crop the bottom
-    const ms = WORLD.width / mine.width;
-    g.drawImage(mine, 0, gy - 4, WORLD.width, mine.height * ms);
+    // mine: cover the whole area below the ground line (crop whichever side overflows)
+    const ms = Math.max(WORLD.width / mine.width, (WORLD.height - gy + 4) / mine.height);
+    g.drawImage(mine, (WORLD.width - mine.width * ms) / 2, gy - 4, mine.width * ms, mine.height * ms);
     // top bar, then move the half-circle backdrop behind each miner
     g.drawImage(top, 0, 0, WORLD.width, gy);
     const k = top.width / TOP_ART_W;
-    const sx = WORLD.width / TOP_ART_W;
     const sy = gy / (top.height / k);
-    const arch = (srcX: number, destCenter: number) =>
-      g.drawImage(top, srcX * k, 0, ARCH.w * k, ARCH.h * k, destCenter - (ARCH.w * sx) / 2, 0, ARCH.w * sx, ARCH.h * sy);
-    const centre = (ARCH.x + ARCH.w / 2) * sx;
-    arch(ARCH.plainX, centre); // erase the original one
+    // the flat bar stretches with the world; the half-circle keeps its shape
+    const stretch = WORLD.width / TOP_ART_W;
+    const sx = sy;
+    // erase the original half-circle with a plain piece of the bar
+    g.drawImage(
+      top,
+      ARCH.plainX * k,
+      0,
+      ARCH.w * k,
+      ARCH.h * k,
+      ARCH.x * stretch,
+      0,
+      ARCH.w * stretch,
+      ARCH.h * sy,
+    );
     for (const x of minerXs) {
       // copy the half-circle from the untouched artwork
-      g.drawImage(top, ARCH.x * k, 0, ARCH.w * k, ARCH.h * k, x + MINER_H * 0.28 - (ARCH.w * sx) / 2, 0, ARCH.w * sx, ARCH.h * sy);
+      g.drawImage(
+        top,
+        ARCH.x * k,
+        0,
+        ARCH.w * k,
+        ARCH.h * k,
+        x + MINER_H * 0.28 - (ARCH.w * sx) / 2,
+        0,
+        ARCH.w * sx,
+        ARCH.h * sy,
+      );
     }
   }
 
@@ -299,7 +346,15 @@ export class Renderer {
     for (let i = 0; i < 260; i++) {
       g.fillStyle = `rgba(${rng.next() > 0.5 ? '255,230,200' : '30,15,5'},${0.08 + rng.next() * 0.12})`;
       g.beginPath();
-      g.ellipse(rng.range(0, WORLD.width), rng.range(gy + 12, WORLD.height), rng.range(1.5, 4), rng.range(1, 3), 0, 0, Math.PI * 2);
+      g.ellipse(
+        rng.range(0, WORLD.width),
+        rng.range(gy + 12, WORLD.height),
+        rng.range(1.5, 4),
+        rng.range(1, 3),
+        0,
+        0,
+        Math.PI * 2,
+      );
       g.fill();
     }
     g.fillStyle = '#5aa33a';

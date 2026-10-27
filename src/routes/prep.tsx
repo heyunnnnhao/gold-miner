@@ -77,6 +77,7 @@ function PrepPage() {
             <span className="muted">金币</span>
             <Money value={run.wallet} />
             <span className="muted">· 💣 × {run.bombs}</span>
+            {run.revives > 0 && <span className="muted">· 💖 × {run.revives}</span>}
           </div>
         </div>
 

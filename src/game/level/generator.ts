@@ -1,10 +1,10 @@
-import { GLOBAL, WORLD } from '@/config/global';
-import { creatureCount, soloTarget, unlockedAt, type Mode } from '@/config/levels';
+import { WORLD } from '@/config/global';
+import { creatureCount, MAP_GEN, soloTarget, unlockedAt, type Mode } from '@/config/levels';
 import { circlesOverlap, type Vec2 } from '@/core/math';
 import type { Rng } from '@/core/rng';
 import type { CreatureId, MineralId } from '@/content/ids';
 import type { MineralDef } from '../defs';
-import { MODES } from '../modes';
+import { MODES, minerX } from '../modes';
 import { R } from '../registries';
 
 export type SpawnSpec =
@@ -24,11 +24,22 @@ const RESERVED_HALF_WIDTH = 28;
 export const levelIncrement = (n: number): number => (n <= 1 ? soloTarget(1) : soloTarget(n) - soloTarget(n - 1));
 
 /**
- * Map value budget: (cumulative) solo target × valueBudgetRatio, × duoSpawnMul in duo.
- * From mid levels on the mine fills up before the budget is reached, so time becomes the real limit.
+ * Map value budget: the gold this level adds × MAP_GEN.budgetRatio (× duoSpawnMul in duo).
+ * Based on the increment, not the cumulative goal, so later maps don't flood with gold.
  */
 export const levelBudget = (n: number, mode: Mode): number =>
-  Math.round(soloTarget(n) * GLOBAL.valueBudgetRatio * MODES[mode].spawnMul);
+  Math.round(levelIncrement(n) * MAP_GEN.budgetRatio * MODES[mode].spawnMul);
+
+/** How many valuable pieces a map may hold. */
+export const valuableCap = (n: number, mode: Mode): number =>
+  Math.round(MAP_GEN.maxValuables(n) * (mode === 'duo' ? MAP_GEN.duoCountMul : 1));
+
+/**
+ * Weight multiplier that steers picks toward pieces worth about what each remaining slot must carry:
+ * once the count cap gets close, bigger nuggets and gems replace more small ones.
+ */
+const sizeBias = (value: number, perSlot: number): number =>
+  perSlot <= 0 ? 1 : Math.min(5, Math.max(0.2, value / perSlot)) ** 0.9;
 
 type Placed = { pos: Vec2; radius: number };
 
@@ -51,7 +62,7 @@ function tryPlace(rng: Rng, radius: number, depth: readonly [number, number], pl
 
 function generateOnce(n: number, mode: Mode, rng: Rng): GeneratedLevel {
   const budget = levelBudget(n, mode);
-  const minerXs = MODES[mode].miners.map((m) => m.x);
+  const minerXs = MODES[mode].miners.map(minerX);
   const unlocked = unlockedAt(n);
   const minerals = unlocked.minerals.map((id) => R.minerals.get(id));
   const valuable = minerals.filter((d) => !d.filler && d.spawnWeight(n) > 0);
@@ -60,8 +71,7 @@ function generateOnce(n: number, mode: Mode, rng: Rng): GeneratedLevel {
   const spawns: SpawnSpec[] = [];
   let value = 0;
 
-  // fillers (rocks, bones, TNT) first: from mid levels the value budget fills the whole mine,
-  // so placing them last would silently drop them
+  // fillers (rocks, bones, TNT) first so they always get their spots
   for (const def of fillers) {
     const count = Math.max(0, def.filler.count(n));
     for (let i = 0; i < count; i++) {
@@ -71,14 +81,18 @@ function generateOnce(n: number, mode: Mode, rng: Rng): GeneratedLevel {
       spawns.push({ kind: 'mineral', defId: def.id, pos });
     }
   }
+  const cap = valuableCap(n, mode);
+  let count = 0;
   let guard = 0;
-  while (value < budget && guard++ < 200 && valuable.length > 0) {
-    const def = rng.weighted(valuable, (d) => d.spawnWeight(n));
+  while (value < budget && count < cap && guard++ < 300 && valuable.length > 0) {
+    const perSlot = (budget - value) / (cap - count);
+    const def = rng.weighted(valuable, (d) => d.spawnWeight(n) * sizeBias(d.value, perSlot));
     const pos = tryPlace(rng, def.radius, def.depth, placed, minerXs);
     if (!pos) continue;
     placed.push({ pos, radius: def.radius });
     spawns.push({ kind: 'mineral', defId: def.id, pos });
     value += def.value;
+    count++;
   }
 
   const creatures = unlocked.creatures.map((id) => R.creatures.get(id));

@@ -3,6 +3,7 @@ import { MODULE_SELL_RATIO } from '@/config/shop';
 import type { StatKey } from '@/config/progression';
 import type { BuffId, ItemId, TalentId } from '@/content/ids';
 import { R } from '@/game/registries';
+import { revive } from '@/game/run';
 import { generateShop } from '@/game/shop';
 import type { PlayerId, RunState } from '@/game/state';
 
@@ -17,6 +18,11 @@ const newUid = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `h-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+export function spendRevive(run: RunState): ActionResult {
+  const next = revive(run);
+  return next ? ok(next) : fail('没有可用的复活');
+}
 
 export function enterShop(run: RunState): ActionResult {
   if (run.phase !== 'result' && run.phase !== 'shop') return fail('当前不能进入商店');
@@ -53,13 +59,23 @@ export function buyOffer(run: RunState, offerId: string): ActionResult {
     case 'buff':
       next.buffs.push(offer.ref as BuffId);
       break;
-    case 'module':
+    case 'revive':
+      if (next.revives >= 1) return fail('复活最多持有 1 个');
+      next.revives++;
+      break;
+    case 'module': {
       if (!R.modules.has(offer.ref)) return fail('未知模块');
+      if (moduleCopies(next, offer.ref) >= next.players.length)
+        return fail(next.players.length > 1 ? '每种模块最多 2 个（每人一个）' : '已拥有该模块，出售后才能再买');
       next.modules.push({ uid: newUid(), defId: offer.ref });
       break;
+    }
   }
   return ok(next);
 }
+
+/** Owned copies of a module kind; one per player at most (solo: 1, duo: 2). */
+export const moduleCopies = (run: RunState, defId: string) => run.modules.filter((m) => m.defId === defId).length;
 
 /** Who has this module installed, if anyone. */
 export const moduleHolder = (run: RunState, uid: string) => run.players.find((p) => p.modules.includes(uid));

@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { GLOBAL } from '@/config/global';
-import type { RunState } from '@/game/state';
+import type { Checkpoint, RunState } from '@/game/state';
 import { R } from '@/game/registries';
 
-/** v2: hooks became modules (3 slots per hook). */
-export const SAVE_VERSION = 2;
+/** v2: hooks became modules (3 slots per hook). v3: revives + failed-level checkpoint. */
+export const SAVE_VERSION = 3;
 
 const playerId = z.enum(['p1', 'p2']);
 
@@ -35,11 +35,12 @@ const levelResultSchema = z.object({
   ),
 });
 
-const runSchema = z.object({
+const checkpointSchema = z.object({
   mode: z.enum(['solo', 'duo']),
   level: z.number().int().min(1),
   wallet: z.number(),
   bombs: z.number().int().min(0),
+  revives: z.number().int().min(0),
   items: z.record(z.string(), z.number().int().min(0)),
   buffs: z.array(z.string()),
   hotbar: z.array(z.string().nullable()),
@@ -53,7 +54,7 @@ const runSchema = z.object({
       offers: z.array(
         z.object({
           id: z.string(),
-          kind: z.enum(['bomb', 'item', 'buff', 'module']),
+          kind: z.enum(['bomb', 'revive', 'item', 'buff', 'module']),
           ref: z.string(),
           price: z.number(),
           stock: z.number().nullable(),
@@ -64,6 +65,8 @@ const runSchema = z.object({
   lastResult: levelResultSchema.nullable(),
   totalEarned: z.number(),
 });
+
+const runSchema = checkpointSchema.extend({ checkpoint: checkpointSchema.nullable() });
 
 export const saveFileSchema = z.object({
   version: z.number().int(),
@@ -103,10 +106,12 @@ const migrations: Record<number, (data: Json) => Json> = {
     }
     return { ...data, version: 2, run };
   },
+  // v2 → v3: revive charges and the failed-level checkpoint
+  2: (data) => ({ ...data, version: 3, run: { ...(data.run as Json), revives: 0, checkpoint: null } }),
 };
 
 /** Drops references to content that no longer exists, so removed items can't crash a load. */
-function sanitize(run: z.infer<typeof runSchema>): RunState {
+function sanitize(run: z.infer<typeof checkpointSchema>): Checkpoint {
   const items = Object.fromEntries(Object.entries(run.items).filter(([id]) => R.items.has(id)));
   const modules = run.modules.filter((m) => R.modules.has(m.defId));
   const moduleUids = new Set(modules.map((m) => m.uid));
@@ -128,7 +133,7 @@ function sanitize(run: z.infer<typeof runSchema>): RunState {
         .filter((c) => c.length > 0),
       modules: p.modules.filter((uid) => moduleUids.has(uid)).slice(0, GLOBAL.hookSlots),
     })),
-  } as RunState;
+  } as Checkpoint;
 }
 
 export function parseSave(raw: unknown): SaveFile {
@@ -141,5 +146,10 @@ export function parseSave(raw: unknown): SaveFile {
     version++;
   }
   const parsed = saveFileSchema.parse(data);
-  return { version: parsed.version, savedAt: parsed.savedAt, run: sanitize(parsed.run) };
+  const { checkpoint, ...run } = parsed.run;
+  return {
+    version: parsed.version,
+    savedAt: parsed.savedAt,
+    run: { ...sanitize(run), checkpoint: checkpoint && sanitize(checkpoint) },
+  };
 }

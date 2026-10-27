@@ -5,6 +5,7 @@
 ## Git
 
 - **永远不要使用 git worktree**（包括 EnterWorktree）。始终直接在当前检出的分支上修改和提交。
+- **只有我明确说「commit」时才提交**。做完改动后停在未提交状态并报告；不要自行 commit，更不要自行 push。
 - **每次 commit 都是一个新版本**：
   1. 在 `package.json` 里把 `version` 递增（新功能 / 玩法改动升 minor，纯修复升 patch）。
   2. 在 `CHANGELOG.md` 顶部新增一节 `## vX.Y.Z — YYYY-MM-DD`，用面向玩家的中文写清这次改了什么（游戏内"更新日志"按钮直接展示这个文件）。
