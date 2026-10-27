@@ -36,7 +36,7 @@ The sprites in `sprites/` are taken from the original Flash game **Gold Miner** 
 - Extracted by rendering the SWF's vector shapes / sprite frames to SVG (a small converter written for this
   project; the SWF was only read as data), then cropped. No shapes were redrawn or edited.
 - Mapping: gold = sprite 204, rock = 209, rock2 = 219, bag = 214, diamond = 289, bone = 323, tnt = 331,
-  pig-0..3 = sprite 318 frames 0/3/6/9 (mirrored), diamond-pig-0..3 = sprite 320 (mirrored),
+  pig = sprite 318 frame 0 (mirrored), diamond-pig = sprite 320 frame 0 (mirrored),
   miner / miner-pull-0..3 = sprite 249 frames 0/4/8/12, miner-cheer = 254 frame 3, claw = 292 frame 0,
   explosion = 288, bg-top = root frame 172 background layers, bg-mine-1..4 = shapes 182/309/310/322.
 

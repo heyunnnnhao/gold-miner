@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { R } from '@/game/registries';
-import { emptySession, makeRun, place, tick } from './helpers';
+import { dropStraight, emptySession, makeRun, place, tick, until } from './helpers';
 
 type ModuleId = Parameters<typeof R.modules.get>[0];
 
@@ -55,23 +55,41 @@ describe('new items', () => {
     expect(gold.alive).toBe(true);
   });
 
-  it('点金石 makes rocks worth ×8 for 24 seconds', () => {
+  it('点金石 keeps ×8 on a rock grabbed in time, even when it lands after the 24 seconds', () => {
     const s = emptySession(makeRun({ items: { midas: 1 }, hotbar: bar('midas') }));
-    const rock = place(s, 'rock-l', 200, 300);
-    const gold = place(s, 'gold-m', 400, 300);
+    const p = s.players[0]!;
+    const x = p.hook.pivot.x;
+    const rock = place(s, 'rock-l', x, 650);
     s.update(1 / 60, ['item.1']);
+    tick(s, 20);
+    dropStraight(s);
+    until(s, () => p.hook.state === 'retract');
+    tick(s, 5);
     expect(s.compute('value', 20, { entity: rock })).toBeCloseTo(160);
-    expect(s.compute('value', 100, { entity: gold })).toBeCloseTo(100);
-    tick(s, 24.1);
-    expect(s.compute('value', 20, { entity: rock })).toBeCloseTo(20);
+    expect(s.compute('value', 100, { entity: place(s, 'gold-m', 100, 300) })).toBeCloseTo(100);
+    until(s, () => p.hook.state === 'swing');
+    expect(p.earned).toBe(160);
+    // a rock grabbed after the window gets nothing
+    const late = place(s, 'rock-s', x, 400);
+    dropStraight(s);
+    until(s, () => p.hook.state === 'retract');
+    expect(s.compute('value', 11, { entity: late })).toBeCloseTo(11);
   });
 
-  it('双倍卡 doubles every value for 10 seconds', () => {
+  it('双倍卡 doubles what is already on the hook and what is grabbed within 10 seconds', () => {
     const s = emptySession(makeRun({ items: { 'double-card': 1 }, hotbar: bar('double-card') }));
-    const gold = place(s, 'gold-m', 400, 300);
+    const p = s.players[0]!;
+    const x = p.hook.pivot.x;
+    place(s, 'gold-xl', x, 600);
+    dropStraight(s);
+    until(s, () => p.hook.state === 'retract');
     s.update(1 / 60, ['item.1']);
-    expect(s.compute('value', 100, { entity: gold })).toBeCloseTo(200);
+    until(s, () => p.hook.state === 'swing');
+    expect(p.earned).toBe(1000);
     tick(s, 10.1);
-    expect(s.compute('value', 100, { entity: gold })).toBeCloseTo(100);
+    const late = place(s, 'gold-m', x, 400);
+    dropStraight(s);
+    until(s, () => p.hook.state === 'retract');
+    expect(s.compute('value', 100, { entity: late })).toBeCloseTo(100);
   });
 });

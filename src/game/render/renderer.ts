@@ -77,8 +77,7 @@ export class Renderer {
     if (e.kind === 'creature') {
       const def = R.creatures.get(e.defId);
       const frozen = s.status.frozen > 0 && !e.grabbedBy;
-      const frame = frozen || e.grabbedBy ? 0 : Math.floor(this.time * 8 + e.uid) % 4;
-      const img = getImage(`${def.sprite}-${frame}`) ?? getImage(def.sprite);
+      const img = getImage(def.sprite);
       if (img) {
         g.save();
         g.scale(e.facing, 1);
