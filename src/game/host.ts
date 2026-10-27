@@ -14,6 +14,8 @@ export type GameHostOptions = {
   /** called after every rendered frame */
   onFrame?(): void;
   onPauseChange(paused: boolean): void;
+  /** the cheat-panel key was pressed */
+  onCheatToggle?(): void;
   /** called a moment after time runs out */
   onEnd(session: LevelSession): void;
 };
@@ -47,6 +49,7 @@ export class GameHost {
       (dt) => {
         const actions = this.input.drain();
         if (actions.includes('pause') && !this.session.ended) this.setPaused(!this._paused);
+        if (actions.includes('cheat')) this.opts.onCheatToggle?.();
         if (!this._paused) this.session.update(dt, actions);
       },
       () => {

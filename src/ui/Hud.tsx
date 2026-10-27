@@ -91,7 +91,9 @@ export function Hud({ press }: { press: (a: Action) => void }) {
           const slot = (
             <button
               className={`slot ${!id || count === 0 ? 'empty' : ''}`}
-              onPointerDown={own(() => id && press(`item.${i + 1}` as Action))}
+              // pointerdown must not reach the playfield (tap-to-drop); use on click so a long press can show the tooltip instead
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => id && press(`item.${i + 1}` as Action)}
               aria-label={id ? R.items.get(id).name : `空格 ${i + 1}`}
             >
               <span className="key">{i + 1}</span>

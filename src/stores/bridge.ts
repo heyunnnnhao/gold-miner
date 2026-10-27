@@ -41,7 +41,7 @@ export function attachBridge(session: LevelSession): { flush(): void; detach(): 
         econDirty = false;
       }
       if (itemsDirty) {
-        patchRun({ items: { ...session.econ.items } });
+        patchRun({ items: { ...session.econ.items }, hotbar: [...session.econ.hotbar] });
         itemsDirty = false;
       }
       const effects = session.effects.timed().map((t) => ({ label: t.label, remaining: Math.ceil(t.remaining) }));

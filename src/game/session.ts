@@ -190,6 +190,7 @@ export class LevelSession implements SessionCtx {
         return;
       }
       case 'pause':
+      case 'cheat':
         return;
       default: {
         const slot = itemSlotOf(a);
@@ -202,6 +203,18 @@ export class LevelSession implements SessionCtx {
     const id = this.econ.hotbar[slot];
     if (!id) return false;
     return this.useItem(id, by);
+  }
+
+  /** Gives one of each item; new ones go into empty hotbar slots. */
+  grantItems(ids: readonly ItemId[]): void {
+    for (const id of ids) {
+      this.econ.items[id] = (this.econ.items[id] ?? 0) + 1;
+      if (!this.econ.hotbar.includes(id)) {
+        const empty = this.econ.hotbar.indexOf(null);
+        if (empty >= 0) this.econ.hotbar[empty] = id;
+      }
+    }
+    this.events.emit('items:change', { items: { ...this.econ.items } });
   }
 
   useItem(id: ItemId, by: PlayerId): boolean {

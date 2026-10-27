@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useSelector } from '@tanstack/react-store';
-import { useEffect, useRef, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import type { Action } from '@/config/keys';
 import { GameHost } from '@/game/host';
 import { finishLevel } from '@/game/run';
@@ -11,7 +11,10 @@ import { patchSessionView, sessionStore } from '@/stores/session';
 import { settingsStore } from '@/stores/settings';
 import { audio } from '@/ui/audio';
 import { requirePhase } from '@/ui/flow';
+import { runCheat } from '@/game/cheats';
+import { CheatPanel } from '@/ui/CheatPanel';
 import { useIsPc } from '@/ui/device';
+import { ModuleBadges } from '@/ui/ModuleBadges';
 import { Hud } from '@/ui/Hud';
 
 export const Route = createFileRoute('/play')({
@@ -35,6 +38,9 @@ function PlayPage() {
   const target = useSelector(sessionStore, (s) => s.target);
   const passed = wallet >= target;
   const pc = useIsPc();
+  const [cheatOpen, setCheatOpen] = useState(false);
+  const run = useSelector(runStore, (r) => r);
+  const cheatKeys = useSelector(settingsStore, (s) => s.keymap.cheat);
 
   useEffect(() => {
     const run = getRun();
@@ -56,6 +62,7 @@ function PlayPage() {
       },
       onFrame: () => bridge?.flush(),
       onPauseChange: (p) => patchSessionView({ paused: p }),
+      onCheatToggle: () => setCheatOpen((o) => !o),
       onEnd(s) {
         const current = getRun();
         if (!current || !s.result) return;
@@ -111,7 +118,15 @@ function PlayPage() {
       <div className="rotate-hint">横屏体验更佳 ↻</div>
       <div className="frame" onPointerDown={pc ? undefined : tapField}>
         <canvas ref={canvasRef} />
+        {run && <ModuleBadges run={run} />}
         <Hud press={press} />
+        {cheatOpen && !timeUp && (
+          <CheatPanel
+            toggleKeys={cheatKeys}
+            onRun={(id) => hostRef.current && runCheat(hostRef.current.session, id)}
+            onClose={() => setCheatOpen(false)}
+          />
+        )}
         {timeUp && (
           <div className="overlay" style={{ background: 'rgba(10,5,2,0.35)' }}>
             <div className={`timeup ${passed ? '' : 'fail'}`}>{passed ? '过关！' : '时间到'}</div>

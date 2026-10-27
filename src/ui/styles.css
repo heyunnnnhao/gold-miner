@@ -1189,3 +1189,101 @@ table.keys td {
     padding: 10px 12px;
   }
 }
+
+/* ---------- module chips next to the miner ---------- */
+
+.module-badges {
+  position: absolute;
+  display: flex;
+  gap: 0.35cqw;
+  transform: translateY(-50%);
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.module-badge {
+  width: 2.6cqw;
+  height: 2.6cqw;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5cqw;
+  line-height: 1;
+  background: rgba(11, 13, 19, 0.85);
+  border: 0.1cqw solid var(--line-strong);
+  box-shadow: 0 0.3cqw 0.8cqw rgba(0, 0, 0, 0.4);
+  cursor: help;
+}
+
+.tip-wrap {
+  -webkit-touch-callout: none;
+}
+
+/* ---------- cheat panel ---------- */
+
+.cheat-panel {
+  position: absolute;
+  top: 9cqw;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: min(46cqw, 92%);
+  padding: 1.2cqw 1.4cqw;
+  border-radius: 1.2cqw;
+  background: rgba(14, 16, 22, 0.96);
+  border: 0.1cqw solid var(--line-strong);
+  box-shadow: 0 1.5cqw 4cqw rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  font-size: 1.3cqw;
+}
+
+.cheat-head {
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+  margin-bottom: 1cqw;
+}
+
+.cheat-head strong {
+  color: var(--gold-hi);
+  font-size: 1.6cqw;
+}
+
+.cheat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8cqw;
+}
+
+.cheat-btn {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6cqw;
+  padding: 0.9cqw 0.6cqw;
+  border-radius: 0.9cqw;
+  border: 0.1cqw solid var(--line-strong);
+  background: rgba(214, 178, 102, 0.08);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.35cqw;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    transform 0.08s;
+}
+
+.cheat-btn:hover {
+  background: rgba(214, 178, 102, 0.2);
+}
+
+.cheat-btn:active {
+  transform: scale(0.95);
+  background: rgba(214, 178, 102, 0.32);
+}
+
+.cheat-icon {
+  font-size: 1.7cqw;
+}

@@ -33,7 +33,7 @@ npm run sim -- --runs 200 --levels 15 --mode solo --shop greedy --skill 0.6   # 
 npm run smoke -- http://127.0.0.1:5173/ sim-output/screens [duo]             # 浏览器冒烟测试（用本机 Edge）
 ```
 
-开发模式下控制台可用 `__gm.addGold(1000)`、`__gm.end()` 调试当前关卡。
+关卡中按 **`** 键（数字 1 左边）打开作弊面板：加钱、立即通关、加时间、加炸弹、加道具。开发模式下控制台还可用 `__gm.addGold(1000)`、`__gm.end()`。
 
 ## 版本与更新日志
 

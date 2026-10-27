@@ -15,6 +15,7 @@ export const ACTIONS = [
   'item.8',
   'item.9',
   'pause',
+  'cheat',
 ] as const;
 
 export type Action = (typeof ACTIONS)[number];
@@ -34,6 +35,7 @@ export const ACTION_NAMES: Record<Action, string> = {
   'item.8': '道具 8',
   'item.9': '道具 9',
   pause: '暂停',
+  cheat: '作弊面板',
 };
 
 const digits = (i: number) => [`Digit${i}`, `Numpad${i}`];
@@ -53,6 +55,8 @@ export const DEFAULT_KEYMAP: Keymap<Action> = {
   'item.8': digits(8),
   'item.9': digits(9),
   pause: ['Escape', 'Space'],
+  // the key left of 1
+  cheat: ['Backquote'],
 };
 
 export const itemSlotOf = (a: Action): number | null => (a.startsWith('item.') ? Number(a.slice(5)) - 1 : null);
@@ -63,6 +67,6 @@ export function keyLabel(code: string): string {
   if (code.startsWith('Digit')) return code.slice(5);
   if (code.startsWith('Numpad')) return `小键盘${code.slice(6)}`;
   const arrows: Record<string, string> = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→' };
-  const named: Record<string, string> = { ...arrows, Space: '空格', Escape: 'Esc', Enter: '回车' };
+  const named: Record<string, string> = { ...arrows, Space: '空格', Escape: 'Esc', Enter: '回车', Backquote: '`' };
   return named[code] ?? code;
 }

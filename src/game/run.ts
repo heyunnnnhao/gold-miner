@@ -61,6 +61,7 @@ export function finishLevel(run: RunState, econ: Economy, result: LevelResult): 
   next.wallet = econ.wallet;
   next.bombs = econ.bombs;
   next.items = { ...econ.items };
+  next.hotbar = [...econ.hotbar];
   next.buffs = [];
   next.totalEarned += result.earned;
   next.phase = result.passed ? 'result' : 'over';
