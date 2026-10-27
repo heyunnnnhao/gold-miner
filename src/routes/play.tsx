@@ -122,7 +122,7 @@ function PlayPage() {
             <div className="panel">
               <h2>暂停</h2>
               <button className="btn" onClick={() => hostRef.current?.setPaused(false)}>
-                继续 (Esc)
+                继续（Esc / 空格）
               </button>
               <button className="btn secondary" onClick={quit}>
                 返回菜单（本关进度不保存）

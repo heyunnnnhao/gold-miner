@@ -101,7 +101,7 @@ export class LevelSession implements SessionCtx {
     }
     // player layer: hook traits and talents
     for (const p of this.players) {
-      for (const t of p.hook.def.traits) {
+      for (const t of p.hook.traits) {
         const d = R.hookTraits.get(t).apply?.(p, this);
         if (d) this.disposers.push(d);
       }

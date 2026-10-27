@@ -30,8 +30,8 @@ function ShopPage() {
   if (!run?.shop) return null;
   const nextTarget = levelTarget(run.level + 1, run.mode);
   const owned = (o: ShopOffer) =>
-    o.kind === 'hook'
-      ? run.hooks.filter((h) => h.defId === o.ref).length
+    o.kind === 'module'
+      ? run.modules.filter((m) => m.defId === o.ref).length
       : o.kind === 'item'
         ? (run.items[o.ref as ItemId] ?? 0)
         : o.kind === 'bomb'
@@ -61,35 +61,58 @@ function ShopPage() {
           </div>
         </div>
 
-        <div className="grid">
-          {run.shop.offers.map((o) => {
-            const info = offerInfo(o);
-            const soldOut = o.stock !== null && o.stock <= 0;
-            const cant =
-              soldOut || run.wallet < o.price || (o.kind === 'buff' && run.buffs.includes(o.ref as BuffId));
-            return (
-              <div key={o.id} className={`card ${cant ? 'disabled' : ''}`}>
-                <div className="row">
-                  <span className="icon">{info.icon}</span>
-                  <span className="spacer" />
-                  <span className="badge">{info.tag}</span>
-                </div>
-                <span className="name">{info.name}</span>
-                <span className="desc">{info.desc}</span>
-                <div className="row">
-                  <span className="price">${o.price.toLocaleString()}</span>
-                  <span className="spacer" />
-                  <span className="muted small">
-                    {o.stock === null ? '' : `库存 ${o.stock} · `}已有 {owned(o)}
-                  </span>
-                </div>
-                <button className="btn" disabled={cant} onClick={() => buy(o.id)}>
-                  {soldOut ? '售罄' : '购买'}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+        {(
+          [
+            [
+              '本关货架',
+              '炸弹、主动道具和被动效果，每关随机上架',
+              run.shop.offers.filter((o) => o.kind !== 'module'),
+            ],
+            [
+              '钩子模块',
+              '常驻出售；在整备页装到钩子上，每个钩子最多 3 个',
+              run.shop.offers.filter((o) => o.kind === 'module'),
+            ],
+          ] as const
+        ).map(([title, hint, offers]) => (
+          <section key={title} className="panel">
+            <h2>{title}</h2>
+            <p className="muted small" style={{ marginTop: -6 }}>
+              {hint}
+            </p>
+            <div className="grid">
+              {offers.map((o) => {
+                const info = offerInfo(o);
+                const soldOut = o.stock !== null && o.stock <= 0;
+                const cant =
+                  soldOut ||
+                  run.wallet < o.price ||
+                  (o.kind === 'buff' && run.buffs.includes(o.ref as BuffId));
+                return (
+                  <div key={o.id} className={`card ${cant ? 'disabled' : ''}`}>
+                    <div className="row">
+                      <span className="icon">{info.icon}</span>
+                      <span className="spacer" />
+                      <span className="badge">{info.tag}</span>
+                    </div>
+                    <span className="name">{info.name}</span>
+                    <span className="desc">{info.desc}</span>
+                    <div className="row">
+                      <span className="price">${o.price.toLocaleString()}</span>
+                      <span className="spacer" />
+                      <span className="muted small">
+                        {o.stock === null ? '' : `库存 ${o.stock} · `}已有 {owned(o)}
+                      </span>
+                    </div>
+                    <button className="btn" disabled={cant} onClick={() => buy(o.id)}>
+                      {soldOut ? '售罄' : '购买'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
 
         <div className="row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn big" onClick={leave}>

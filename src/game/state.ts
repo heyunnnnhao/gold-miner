@@ -1,5 +1,5 @@
 import type { Mode } from '@/config/levels';
-import type { BuffId, HookId, ItemId, TalentId } from '@/content/ids';
+import type { BuffId, ItemId, ModuleId, TalentId } from '@/content/ids';
 
 export type PlayerId = 'p1' | 'p2';
 
@@ -14,13 +14,13 @@ export type PlayerState = {
   talents: TalentId[];
   /** queued talent picks, each a set of choices */
   talentChoices: TalentId[][];
-  /** hook instance uid */
-  equippedHook: string;
+  /** uids of the module instances installed on this player's hook (max HOOK_SLOTS) */
+  modules: string[];
 };
 
-export type HookInstance = { uid: string; defId: HookId };
+export type ModuleInstance = { uid: string; defId: ModuleId };
 
-export type ShopOfferKind = 'bomb' | 'item' | 'buff' | 'hook';
+export type ShopOfferKind = 'bomb' | 'item' | 'buff' | 'module';
 
 export type ShopOffer = {
   id: string;
@@ -59,8 +59,8 @@ export type RunState = {
   /** passive buffs applied to the next level */
   buffs: BuffId[];
   hotbar: (ItemId | null)[];
-  /** hook instances in the shared inventory */
-  hooks: HookInstance[];
+  /** module instances in the shared inventory (installed or not) */
+  modules: ModuleInstance[];
   players: PlayerState[];
   runSeed: number;
   phase: Phase;

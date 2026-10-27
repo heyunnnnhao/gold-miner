@@ -17,7 +17,7 @@ export const TALENT_LEVELS = [5, 10, 15, 20] as const;
 export const TALENT_CHOICES = 3;
 
 export const XP_VALUE_RATIO = 0.2;
-export const XP_TAG_BONUS: Record<string, number> = { diamond: 30, pig: 15, bag: 10 };
+export const XP_TAG_BONUS: Record<string, number> = { diamond: 30, ruby: 45, pig: 15, bag: 10 };
 
 export const STAT_EFFECTS = {
   str: [{ stat: 'retractSpeed', mul: 0.03 }],

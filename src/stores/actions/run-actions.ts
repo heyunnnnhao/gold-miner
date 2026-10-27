@@ -1,4 +1,5 @@
-import { HOOK_SELL_RATIO } from '@/config/shop';
+import { GLOBAL } from '@/config/global';
+import { MODULE_SELL_RATIO } from '@/config/shop';
 import type { StatKey } from '@/config/progression';
 import type { BuffId, ItemId, TalentId } from '@/content/ids';
 import { R } from '@/game/registries';
@@ -52,44 +53,51 @@ export function buyOffer(run: RunState, offerId: string): ActionResult {
     case 'buff':
       next.buffs.push(offer.ref as BuffId);
       break;
-    case 'hook':
-      if (!R.hooks.has(offer.ref)) return fail('未知抓钩');
-      next.hooks.push({ uid: newUid(), defId: offer.ref });
+    case 'module':
+      if (!R.modules.has(offer.ref)) return fail('未知模块');
+      next.modules.push({ uid: newUid(), defId: offer.ref });
       break;
   }
   return ok(next);
 }
 
-export function sellHook(run: RunState, uid: string): ActionResult {
-  const inst = run.hooks.find((h) => h.uid === uid);
-  if (!inst) return fail('抓钩不存在');
-  const def = R.hooks.get(inst.defId);
-  if (!def.sellable) return fail(`${def.name}不可出售`);
-  if (run.players.some((p) => p.equippedHook === uid)) return fail('请先卸下该抓钩');
-  const next = structuredClone(run);
-  next.hooks = next.hooks.filter((h) => h.uid !== uid);
-  next.wallet += Math.round(def.price * HOOK_SELL_RATIO);
-  return ok(next);
-}
+/** Who has this module installed, if anyone. */
+export const moduleHolder = (run: RunState, uid: string) => run.players.find((p) => p.modules.includes(uid));
 
-/** Equips a hook instance. If the other player holds it, the two players trade hooks. */
-export function equipHook(run: RunState, playerId: PlayerId, uid: string): ActionResult {
-  if (!run.hooks.some((h) => h.uid === uid)) return fail('抓钩不存在');
+/**
+ * Installs a module on a player's hook (max GLOBAL.hookSlots, one of each kind per hook).
+ * A module installed on the other player's hook moves over.
+ */
+export function installModule(run: RunState, playerId: PlayerId, uid: string): ActionResult {
+  const inst = run.modules.find((m) => m.uid === uid);
+  if (!inst) return fail('模块不存在');
   const next = structuredClone(run);
   const me = next.players.find((p) => p.id === playerId);
   if (!me) return fail('玩家不存在');
-  const holder = next.players.find((p) => p.id !== playerId && p.equippedHook === uid);
-  if (holder) holder.equippedHook = me.equippedHook;
-  me.equippedHook = uid;
+  if (me.modules.includes(uid)) return fail('已经装在这个钩子上');
+  if (me.modules.length >= GLOBAL.hookSlots) return fail(`钩子最多装 ${GLOBAL.hookSlots} 个模块`);
+  const sameKind = me.modules.some((u) => next.modules.find((m) => m.uid === u)?.defId === inst.defId);
+  if (sameKind) return fail('同一个钩子不能装两个相同模块');
+  for (const p of next.players) p.modules = p.modules.filter((u) => u !== uid);
+  me.modules.push(uid);
   return ok(next);
 }
 
-export function swapHooks(run: RunState): ActionResult {
-  const [a, b] = run.players;
-  if (!a || !b) return fail('单人模式无需互换');
+export function uninstallModule(run: RunState, playerId: PlayerId, uid: string): ActionResult {
   const next = structuredClone(run);
-  const [na, nb] = next.players as [typeof a, typeof b];
-  [na.equippedHook, nb.equippedHook] = [nb.equippedHook, na.equippedHook];
+  const me = next.players.find((p) => p.id === playerId);
+  if (!me || !me.modules.includes(uid)) return fail('该模块没有装在这个钩子上');
+  me.modules = me.modules.filter((u) => u !== uid);
+  return ok(next);
+}
+
+export function sellModule(run: RunState, uid: string): ActionResult {
+  const inst = run.modules.find((m) => m.uid === uid);
+  if (!inst) return fail('模块不存在');
+  if (moduleHolder(run, uid)) return fail('请先卸下该模块');
+  const next = structuredClone(run);
+  next.modules = next.modules.filter((m) => m.uid !== uid);
+  next.wallet += Math.round(R.modules.get(inst.defId).price * MODULE_SELL_RATIO);
   return ok(next);
 }
 

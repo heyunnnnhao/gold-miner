@@ -24,6 +24,9 @@ function load(): Settings {
       const codes = parsed.keymap[a];
       if (codes && codes.length > 0) keymap[a] = codes;
     }
+    // v0.2.0 made Space a pause key too; add it to saves that still have the old Esc-only default
+    if (keymap.pause.length === 1 && keymap.pause[0] === 'Escape' && !ACTIONS.some((a) => keymap[a].includes('Space')))
+      keymap.pause = ['Escape', 'Space'];
     return { keymap, volume: parsed.volume };
   } catch {
     return fallback;

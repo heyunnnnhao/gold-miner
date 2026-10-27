@@ -19,7 +19,13 @@ export function Hud({ press }: { press: (a: Action) => void }) {
   const view = useSelector(sessionStore, (s) => s);
   const econ = useSelector(
     runStore,
-    (r) => ({ wallet: r?.wallet ?? 0, bombs: r?.bombs ?? 0, items: r?.items ?? {}, hotbar: r?.hotbar ?? [], players: r?.players ?? [] }),
+    (r) => ({
+      wallet: r?.wallet ?? 0,
+      bombs: r?.bombs ?? 0,
+      items: r?.items ?? {},
+      hotbar: r?.hotbar ?? [],
+      players: r?.players ?? [],
+    }),
     { compare: shallow },
   );
   const progress = view.target > 0 ? Math.min(100, (econ.wallet / view.target) * 100) : 0;

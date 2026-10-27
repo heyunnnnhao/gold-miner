@@ -35,9 +35,13 @@ npm run smoke -- http://127.0.0.1:5173/ sim-output/screens [duo]             # �
 
 开发模式下控制台可用 `__gm.addGold(1000)`、`__gm.end()` 调试当前关卡。
 
+## 版本与更新日志
+
+每次提交都是一个新版本：递增 `package.json` 的 `version`，并在 `CHANGELOG.md` 顶部写一条面向玩家的记录（规则见 `CLAUDE.md`）。游戏主菜单的「更新日志」按钮直接展示这个文件。
+
 ## 扩展内容
 
-新增矿物、小动物、道具、被动 buff、抓钩、抓钩特性、天赋：在 `src/content/` 对应目录加定义文件，在 `src/content/ids.ts` 加 id，在 `src/content/index.ts` 注册。需要出现在关卡里的，在 `src/config/levels.ts` 的解锁表里加一行。
+新增矿物、小动物、道具、被动 buff、钩子模块、模块特性、天赋：在 `src/content/` 对应目录加定义文件，在 `src/content/ids.ts` 加 id，在 `src/content/index.ts` 注册。需要出现在关卡里的，在 `src/config/levels.ts` 的解锁表里加一行。
 
 ## 素材
 

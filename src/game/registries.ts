@@ -3,20 +3,20 @@ import type {
   BehaviorId,
   BuffId,
   CreatureId,
-  HookId,
   HookTraitId,
   ItemId,
   MineralId,
+  ModuleId,
   TalentId,
 } from '@/content/ids';
 import type {
   BehaviorDef,
   BuffDef,
   CreatureDef,
-  HookDef,
   HookTraitDef,
   ItemDef,
   MineralDef,
+  ModuleDef,
   TalentDef,
 } from './defs';
 
@@ -26,7 +26,7 @@ export const R = {
   behaviors: new Registry<BehaviorId, BehaviorDef>('behaviors'),
   items: new Registry<ItemId, ItemDef>('items'),
   buffs: new Registry<BuffId, BuffDef>('buffs'),
-  hooks: new Registry<HookId, HookDef>('hooks'),
+  modules: new Registry<ModuleId, ModuleDef>('modules'),
   hookTraits: new Registry<HookTraitId, HookTraitDef>('hookTraits'),
   talents: new Registry<TalentId, TalentDef>('talents'),
 };

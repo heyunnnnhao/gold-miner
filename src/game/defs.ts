@@ -7,10 +7,10 @@ import type {
   BehaviorId,
   BuffId,
   CreatureId,
-  HookId,
   HookTraitId,
   ItemId,
   MineralId,
+  ModuleId,
   TalentId,
 } from '@/content/ids';
 import type { GameEvents } from './events';
@@ -68,7 +68,10 @@ export type HookState = 'swing' | 'extend' | 'retract';
 
 export type HookRuntime = {
   owner: PlayerId;
-  def: HookDef;
+  /** modules installed on this hook (max 3) */
+  modules: readonly ModuleDef[];
+  /** union of the modules' traits */
+  traits: readonly HookTraitId[];
   state: HookState;
   pivot: Vec2;
   /** radians from vertical, positive = right */
@@ -188,20 +191,21 @@ export interface BuffDef extends ShopInfo {
   apply(s: SessionCtx): Disposer | void;
 }
 
-export interface HookDef {
-  id: HookId;
+/** A module plugs into a hook slot; a hook combines the stats (multiplied) and traits of up to 3 modules. */
+export interface ModuleDef {
+  id: ModuleId;
   name: string;
   desc: string;
+  icon: string;
   price: number;
   stats: { extendMul: number; retractMul: number; radiusMul: number };
   traits: readonly HookTraitId[];
-  sellable: boolean;
 }
 
 export interface HookTraitDef {
   id: HookTraitId;
   name: string;
-  /** player-layer effects of carrying this hook (applied at level start, like talents) */
+  /** player-layer effects of a hook with this trait (applied at level start, like talents) */
   apply?(p: PlayerRuntime, s: SessionCtx): Disposer | void;
   /** return false to let the hook pass through an entity */
   canGrab?(e: Entity): boolean;

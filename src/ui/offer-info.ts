@@ -1,4 +1,4 @@
-import type { BuffId, HookId, ItemId } from '@/content/ids';
+import type { BuffId, ItemId, ModuleId } from '@/content/ids';
 import { R } from '@/game/registries';
 import type { ShopOffer } from '@/game/state';
 
@@ -16,9 +16,9 @@ export function offerInfo(o: ShopOffer): OfferInfo {
       const d = R.buffs.get(o.ref as BuffId);
       return { icon: d.icon, name: d.name, desc: d.desc, tag: '被动 · 下一关' };
     }
-    case 'hook': {
-      const d = R.hooks.get(o.ref as HookId);
-      return { icon: '🪝', name: d.name, desc: d.desc, tag: '抓钩' };
+    case 'module': {
+      const d = R.modules.get(o.ref as ModuleId);
+      return { icon: d.icon, name: d.name, desc: d.desc, tag: '钩子模块' };
     }
   }
 }

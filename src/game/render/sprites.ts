@@ -207,7 +207,17 @@ function debris(g: G, r: number, seed: number): void {
   }
 }
 
-const STATIC: Record<string, (g: G, r: number, seed: number) => void> = { gold, rock, rock2: rock, diamond, bone, bag, tnt, debris };
+const STATIC: Record<string, (g: G, r: number, seed: number) => void> = {
+  gold,
+  rock,
+  rock2: rock,
+  diamond,
+  ruby: diamond,
+  bone,
+  bag,
+  tnt,
+  debris,
+};
 
 const cache = new Map<string, HTMLCanvasElement | OffscreenCanvas>();
 

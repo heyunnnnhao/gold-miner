@@ -1,6 +1,6 @@
 import type { HookTraitDef } from '@/game/defs';
 
-const PRECIOUS = ['diamond', 'bag'];
+const PRECIOUS = ['gem', 'bag'];
 
 export const appraise: HookTraitDef = {
   id: 'appraise',

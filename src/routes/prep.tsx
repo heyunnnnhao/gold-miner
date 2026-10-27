@@ -2,15 +2,11 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useSelector } from '@tanstack/react-store';
 import { useState } from 'react';
 import { levelTarget } from '@/config/levels';
-import { HOOK_SELL_RATIO } from '@/config/shop';
 import type { ItemId } from '@/content/ids';
 import { R } from '@/game/registries';
 import {
   assignHotbar,
-  equipHook,
-  sellHook,
   startNextLevel,
-  swapHooks,
   swapHotbar,
 } from '@/stores/actions/run-actions';
 import { runStore } from '@/stores/run';
@@ -24,8 +20,9 @@ import {
   XpBar,
   useToast,
 } from '@/ui/components';
-import { BuffDetail, HookDetail, ItemDetail } from '@/ui/details';
+import { BuffDetail, ItemDetail } from '@/ui/details';
 import { dispatchAndSave, requirePhase } from '@/ui/flow';
+import { ModulePanel } from '@/ui/ModulePanel';
 import { Tip } from '@/ui/Tooltip';
 
 export const Route = createFileRoute('/prep')({
@@ -151,55 +148,7 @@ function PrepPage() {
           )}
         </div>
 
-        <div className="panel">
-          <div className="row" style={{ marginBottom: 10 }}>
-            <h2 style={{ margin: 0 }}>抓钩</h2>
-            <span className="spacer" />
-            {run.players.length > 1 && (
-              <button className="btn small secondary" onClick={() => act(swapHooks)}>
-                ⇄ 两人互换
-              </button>
-            )}
-          </div>
-          <div className="grid">
-            {run.hooks.map((h) => {
-              const def = R.hooks.get(h.defId);
-              const holder = run.players.find((p) => p.equippedHook === h.uid);
-              return (
-                <Tip key={h.uid} block placement="bottom" content={<HookDetail id={h.defId} />}>
-                  <div className={`card ${holder ? 'selected' : ''}`}>
-                    <div className="row">
-                      <span className="name">{def.name}</span>
-                      <span className="spacer" />
-                      {holder && <PlayerBadge id={holder.id} />}
-                    </div>
-                    <span className="desc">{def.desc}</span>
-                    <div className="row">
-                      {run.players.map((p) => (
-                        <button
-                          key={p.id}
-                          className="btn small"
-                          disabled={p.equippedHook === h.uid}
-                          onClick={() => act((r) => equipHook(r, p.id, h.uid))}
-                        >
-                          {run.players.length > 1 ? `${p.id.toUpperCase()} 装备` : '装备'}
-                        </button>
-                      ))}
-                      {def.sellable && !holder && (
-                        <button
-                          className="btn small secondary"
-                          onClick={() => act((r) => sellHook(r, h.uid))}
-                        >
-                          出售 ${Math.round(def.price * HOOK_SELL_RATIO)}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </Tip>
-              );
-            })}
-          </div>
-        </div>
+        <ModulePanel run={run} act={act} />
 
         <div className="cols">
           {run.players.map((p) => (

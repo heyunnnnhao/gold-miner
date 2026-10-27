@@ -6,6 +6,8 @@ export const GLOBAL = {
   /** total map value ≈ solo target × this */
   valueBudgetRatio: 1.8,
   hotbarSize: 9,
+  /** module slots on each player's hook */
+  hookSlots: 3,
   startingBombs: 0,
   startingWallet: 0,
 } as const;

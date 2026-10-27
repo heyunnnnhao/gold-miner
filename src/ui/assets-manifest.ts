@@ -19,6 +19,7 @@ export const IMAGE_MANIFEST: Record<string, ImageEntry> = {
   debris: sprite('rock2'),
   bag: sprite('bag'),
   diamond: sprite('diamond', 128),
+  ruby: sprite('ruby', 128),
   bone: sprite('bone'),
   tnt: sprite('tnt'),
   ...frames('pig', 4),

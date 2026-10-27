@@ -2,24 +2,34 @@ import { describe, expect, it } from 'vitest';
 import { R } from '@/game/registries';
 import { dropStraight, emptySession, makeRun, place, tick, until } from './helpers';
 
-const withHook = (defId: Parameters<typeof R.hooks.get>[0], patch = {}) => {
-  const run = makeRun({ hooks: [{ uid: 'h1', defId }], ...patch });
-  run.players[0]!.equippedHook = 'h1';
+type ModuleId = Parameters<typeof R.modules.get>[0];
+
+/** A session whose P1 hook has the given modules installed. */
+const withModules = (ids: ModuleId[], patch = {}) => {
+  const modules = ids.map((defId, i) => ({ uid: `m${i}`, defId }));
+  const run = makeRun({ modules, ...patch });
+  run.players[0]!.modules = modules.map((m) => m.uid);
   return emptySession(run);
 };
 
-describe('hook prices', () => {
-  it('saw is the cheapest upgrade and scope the most expensive', () => {
-    const paid = R.hooks.all().filter((h) => h.price > 0);
-    const byPrice = [...paid].sort((a, b) => a.price - b.price);
+describe('module prices', () => {
+  it('saw is the cheapest module and scope the most expensive', () => {
+    const byPrice = [...R.modules.all()].sort((a, b) => a.price - b.price);
     expect(byPrice[0]!.id).toBe('saw');
     expect(byPrice.at(-1)!.id).toBe('scope');
   });
 });
 
-describe('new hooks', () => {
-  it('穿石钩 passes through rocks and grabs what is behind', () => {
-    const s = withHook('pierce');
+describe('modules', () => {
+  it('three modules all apply at once; stats multiply', () => {
+    const s = withModules(['claw', 'scope', 'saw']);
+    const p = s.players[0]!;
+    expect(s.compute('grabRadius', 10, { player: p })).toBeCloseTo(10 * 1.6 * 1.15);
+    expect(p.hook.traits).toEqual(expect.arrayContaining(['aimLine', 'killPath']));
+  });
+
+  it('穿石模块 passes through rocks and grabs what is behind', () => {
+    const s = withModules(['pierce']);
     const p = s.players[0]!;
     const x = p.hook.pivot.x;
     const rock = place(s, 'rock-l', x, 320);
@@ -30,22 +40,43 @@ describe('new hooks', () => {
     expect(rock.grabbedBy).toBeNull();
   });
 
-  it('磁力钩 pulls nearby small gold on every grab, without using the magnet item', () => {
-    const s = withHook('magnet');
+  it('磁力模块 pulls nearby small and medium gold on every grab, but not large', () => {
+    const s = withModules(['magnet']);
     const p = s.players[0]!;
     const x = p.hook.pivot.x;
     place(s, 'gold-m', x, 450);
-    const near = place(s, 'gold-s', x + 55, 460);
+    const small = place(s, 'gold-s', x + 55, 460);
+    const medium = place(s, 'gold-m', x - 70, 470);
+    const large = place(s, 'gold-l', x + 40, 540);
     dropStraight(s);
     until(s, () => p.hook.state === 'retract');
-    expect(p.hook.grabbed).toContain(near);
+    expect(p.hook.grabbed).toContain(small);
+    expect(p.hook.grabbed).toContain(medium);
+    expect(p.hook.grabbed).not.toContain(large);
   });
 
-  it('鉴宝钩 adds 30% to diamonds', () => {
-    const s = withHook('appraiser');
+  it('鉴宝模块 adds 30% to diamonds and rubies', () => {
+    const s = withModules(['appraiser']);
     const p = s.players[0]!;
     const d = place(s, 'diamond', 100, 500);
     expect(s.compute('value', 600, { entity: d, player: p })).toBeCloseTo(780);
+    const r = place(s, 'ruby', 200, 500);
+    expect(s.compute('value', 900, { entity: r, player: p })).toBeCloseTo(1170);
+  });
+});
+
+describe('ruby', () => {
+  it('is worth more than a diamond, rarer, and only from level 6', async () => {
+    const { createRng } = await import('@/core/rng');
+    const { generateLevel } = await import('@/game/level/generator');
+    const ruby = R.minerals.get('ruby');
+    const diamond = R.minerals.get('diamond');
+    expect(ruby.value).toBeGreaterThan(diamond.value);
+    for (const n of [6, 10, 15]) expect(ruby.spawnWeight(n)).toBeLessThan(diamond.spawnWeight(n) / 2);
+    expect(generateLevel(5, 'solo', createRng(1)).spawns.some((x) => x.defId === 'ruby')).toBe(false);
+    let found = 0;
+    for (let seed = 0; seed < 20; seed++) found += generateLevel(10, 'solo', createRng(seed)).spawns.filter((x) => x.defId === 'ruby').length;
+    expect(found).toBeGreaterThan(0);
   });
 });
 

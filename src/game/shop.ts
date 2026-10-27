@@ -28,10 +28,9 @@ export function generateShop(run: RunState): ShopState {
     offers.push({ id: `${pick.kind}:${pick.ref}`, kind: pick.kind, ref: pick.ref, price: shopPrice(pick.basePrice, n, rng), stock: 1 });
   }
 
-  // hooks are equipment with fixed prices and are always on sale
-  for (const h of R.hooks.all()) {
-    if (h.price <= 0) continue;
-    offers.push({ id: `hook:${h.id}`, kind: 'hook', ref: h.id, price: h.price, stock: null });
+  // hook modules have fixed prices and are always on sale
+  for (const m of R.modules.all()) {
+    offers.push({ id: `module:${m.id}`, kind: 'module', ref: m.id, price: m.price, stock: null });
   }
   return { level: n, offers };
 }

@@ -1,4 +1,5 @@
-import type { BuffId, HookId, ItemId } from '@/content/ids';
+import { GLOBAL } from '@/config/global';
+import type { BuffId, ItemId, ModuleId } from '@/content/ids';
 import { R } from '@/game/registries';
 
 function Row({ k, v }: { k: string; v: string }) {
@@ -42,18 +43,20 @@ export function BuffDetail({ id }: { id: BuffId }) {
 
 const mul = (x: number) => (x === 1 ? '—' : `×${x}`);
 
-export function HookDetail({ id }: { id: HookId }) {
-  const d = R.hooks.get(id);
+export function ModuleDetail({ id }: { id: ModuleId }) {
+  const d = R.modules.get(id);
   return (
     <>
-      <div className="tip-title">🪝 {d.name}</div>
-      <div className="tip-tag">抓钩 · 装备者独享</div>
+      <div className="tip-title">
+        {d.icon} {d.name}
+      </div>
+      <div className="tip-tag">钩子模块 · 每个钩子最多 {GLOBAL.hookSlots} 个</div>
       <div>{d.desc}</div>
       <Row k="伸出速度" v={mul(d.stats.extendMul)} />
       <Row k="回收倍率" v={mul(d.stats.retractMul)} />
       <Row k="判定半径" v={mul(d.stats.radiusMul)} />
       <Row k="特性" v={d.traits.length ? d.traits.map((t) => R.hookTraits.get(t).name).join('、') : '—'} />
-      {!d.sellable && <Row k="出售" v="不可出售" />}
+      <Row k="价格" v={`$${d.price.toLocaleString()}`} />
     </>
   );
 }
@@ -63,7 +66,9 @@ export function BombDetail() {
     <>
       <div className="tip-title">💣 炸弹</div>
       <div className="tip-tag">全队共享炸弹池</div>
-      <div>回收途中炸掉自己钩上的物体，钩子立即空钩收回。被炸物体没有金币和经验；空钩时按炸弹无效，也不消耗。</div>
+      <div>
+        回收途中炸掉自己钩上的物体，钩子立即空钩收回。被炸物体没有金币和经验；空钩时按炸弹无效，也不消耗。
+      </div>
       <Row k="使用" v="P1 按 W / P2 按 ↑，或点炸弹按钮" />
     </>
   );

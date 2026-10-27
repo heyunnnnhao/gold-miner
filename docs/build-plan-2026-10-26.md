@@ -680,7 +680,16 @@ Playwright 冒烟：开新局 → 通过注入 `?seed=` 与调试命令快速完
 - 主动道具共 10 种，超过快捷栏 9 格，PRD 的"只有放入快捷栏的才能在局内使用"规则开始生效。
 - 商店不显示 tooltip（局内道具栏与整备页保留）；双人商店直接购买，资源全队共享。
 
-### 18.4 数值模拟结论（`npm run sim`）
+### 18.4 v0.2.0：抓钩改为模块
+
+- 不再有"整把抓钩"。商店常驻出售 7 种**模块**（`src/content/modules/modules.ts`，`ModuleDef = { id, icon, price, stats, traits }`），买入全队共享的模块背包 `RunState.modules`。
+- 每个玩家的钩子有 `GLOBAL.hookSlots = 3` 个槽位，`PlayerState.modules` 记录已安装的模块实例 uid；同一钩子不能装两个同种模块，装到另一名玩家的钩子会自动从原钩子卸下（`installModule / uninstallModule / sellModule`）。
+- 关卡开始时 `createPlayerRuntime` 把已装模块的 stats 连乘进玩家层修饰器，traits 取并集写入 `HookRuntime.traits`；特性系统（`HookTraitDef`）不变。
+- 磁力模块的"吸金"特性吸附小、中金块（不含大金块）；磁石道具仍只吸小金块。
+- 存档版本升到 2，`migrations[1]` 把 v1 的抓钩实例转为同 id 模块并装上原先装备的那把。
+- 新矿石红宝石（`ruby`，价值 900，权重约为钻石的 1/4，第 6 关解锁，深度 0.65–1）。
+
+### 18.5 数值模拟结论（`npm run sim`）
 
 每组 150 局、前 12 关、单人、不购物。`skill` 为机器人熟练度（1 = 完美时机，越低每次收钩后随机发呆越久）。
 

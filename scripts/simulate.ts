@@ -14,7 +14,16 @@ import { createRun, finishLevel } from '@/game/run';
 import { LevelSession } from '@/game/session';
 import type { RunState } from '@/game/state';
 import { baseValueOf, grabRadius } from '@/game/systems/hook';
-import { allocateStat, buyOffer, enterPrep, enterShop, pickTalent, startNextLevel } from '@/stores/actions/run-actions';
+import {
+  allocateStat,
+  buyOffer,
+  enterPrep,
+  enterShop,
+  installModule,
+  moduleHolder,
+  pickTalent,
+  startNextLevel,
+} from '@/stores/actions/run-actions';
 
 registerAllContent();
 
@@ -120,13 +129,12 @@ function shopAndPrep(run: RunState): RunState {
   let r = apply(run, enterShop);
   if (SHOP === 'greedy') {
     // spend only what's above the goal just met; prefer pull-speed and time
-    const priority = ['buff:strength', 'item:hourglass', 'hook:swift', 'bomb', 'buff:polish', 'item:magnet'];
+    const priority = ['buff:strength', 'item:hourglass', 'module:swift', 'bomb', 'module:claw', 'buff:polish', 'item:magnet'];
     for (const id of priority) {
       const offer = r.shop?.offers.find((o) => o.id === id);
       if (offer && r.wallet - offer.price >= levelTarget(r.level, r.mode)) r = apply(r, (x) => buyOffer(x, id));
     }
-    const swift = r.hooks.find((h) => h.defId === 'swift');
-    if (swift && r.players[0]!.equippedHook.startsWith('basic')) r.players[0]!.equippedHook = swift.uid;
+    for (const m of r.modules) if (!moduleHolder(r, m.uid)) r = apply(r, (x) => installModule(x, 'p1', m.uid));
   }
   for (const p of r.players) {
     while (r.players.find((x) => x.id === p.id)!.statPoints > 0) r = apply(r, (x) => allocateStat(x, p.id, 'str'));

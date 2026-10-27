@@ -123,7 +123,7 @@ export class Renderer {
   private drawRope(s: LevelSession, p: PlayerRuntime, dt: number): void {
     const g = this.g;
     const h = p.hook;
-    if (h.state === 'swing') for (const t of h.def.traits) R.hookTraits.get(t).onSwingRender?.(h, g, s);
+    if (h.state === 'swing') for (const t of h.traits) R.hookTraits.get(t).onSwingRender?.(h, g, s);
     const tip = hookTip(h);
     // the claw is drawn exactly as big as its grab circle (centred on the tip)
     const r = grabRadius(p, s);
@@ -153,7 +153,7 @@ export class Renderer {
     } else {
       g.scale(scale, scale);
       g.translate(0, -CLAW_RING);
-      drawClaw(g, h.grabbed.length > 0 ? 0 : 1, '#9aa3ad', h.def.traits.includes('killPath'));
+      drawClaw(g, h.grabbed.length > 0 ? 0 : 1, '#9aa3ad', h.traits.includes('killPath'));
     }
     g.restore();
   }

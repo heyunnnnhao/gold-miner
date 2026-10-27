@@ -6,6 +6,7 @@ import { useSaveQuery } from '@/persistence/queries';
 import { settingsStore } from '@/stores/settings';
 import { useSelector } from '@tanstack/react-store';
 import { audio } from '@/ui/audio';
+import { APP_VERSION, ChangelogDialog } from '@/ui/ChangelogDialog';
 import { useIsPc } from '@/ui/device';
 import { continueGame, newGame, ROUTE_FOR_PHASE } from '@/ui/flow';
 
@@ -18,6 +19,7 @@ function Menu() {
   const save = useSaveQuery();
   const keymap = useSelector(settingsStore, (s) => s.keymap);
   const [busy, setBusy] = useState(false);
+  const [showLog, setShowLog] = useState(false);
   const pc = useIsPc();
   const saved = save.data?.run.phase !== 'over' ? save.data : null;
 
@@ -63,13 +65,16 @@ function Menu() {
         <Link to="/settings" className="btn secondary" style={{ textAlign: 'center', textDecoration: 'none' }}>
           设置 / 改键
         </Link>
+        <button className="btn secondary" onClick={() => setShowLog(true)}>
+          📜 更新日志 · v{APP_VERSION}
+        </button>
       </div>
 
       <div className="panel" style={{ width: 'min(640px, 100%)' }}>
         <h2>玩法</h2>
         <p className="muted" style={{ marginTop: 0 }}>
           每关 60 秒。放钩抓取地下的金块和钻石，越重回收越慢。时间结束时<strong>金币总额</strong>
-          达到目标即过关，然后在商店购买道具和抓钩。经验归把物体拉上来的玩家，升级后加点、选天赋。
+          达到目标即过关，然后在商店购买道具和钩子模块（每个钩子可装 3 个）。经验归把物体拉上来的玩家，升级后加点、选天赋。
         </p>
         <table className="keys">
           <tbody>
@@ -112,6 +117,7 @@ function Menu() {
           </tbody>
         </table>
       </div>
+      {showLog && <ChangelogDialog onClose={() => setShowLog(false)} />}
     </div>
   );
 }

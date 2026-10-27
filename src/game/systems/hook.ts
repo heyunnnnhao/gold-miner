@@ -69,9 +69,9 @@ export function updateHook(p: PlayerRuntime, s: SessionCtx, dt: number): void {
     }
     case 'extend': {
       h.length += s.compute('extendSpeed', HOOK_PHYSICS.extendSpeed, { player: p }) * dt;
-      for (const t of h.def.traits) R.hookTraits.get(t).onExtendTick?.(h, s);
+      for (const t of h.traits) R.hookTraits.get(t).onExtendTick?.(h, s);
       const tip = hookTip(h);
-      const traits = h.def.traits.map((t) => R.hookTraits.get(t));
+      const traits = h.traits.map((t) => R.hookTraits.get(t));
       const hit = findHit(s.entities, tip, grabRadius(p, s), (e) => traits.every((t) => t.canGrab?.(e) ?? true));
       if (hit) {
         grab(p, s, hit);
@@ -119,17 +119,26 @@ function grab(p: PlayerRuntime, s: SessionCtx, e: Entity): void {
   const tip = hookTip(h);
   if (e.kind === 'mineral') R.minerals.get(e.defId).onGrab?.(e, s, h);
   if (p.magnet) attract(p, s, tip);
-  for (const t of h.def.traits) R.hookTraits.get(t).onGrab?.(h, e, s);
+  for (const t of h.traits) R.hookTraits.get(t).onGrab?.(h, e, s);
   s.events.emit('hook:grab', { player: p.id, hook: h, entity: e });
   s.sfx(e.tags.includes('explosive') ? 'explode' : 'grab');
 }
 
-/** Magnet: small gold around a point joins the haul. Uses up the player's magnet item unless consume is false. */
-export function attract(p: PlayerRuntime, s: SessionCtx, at: Vec2, consume = true, radius: number = HOOK_PHYSICS.magnetRadius): void {
+const isSmallGold = (e: Entity) => e.tags.includes('gold') && e.tags.includes('small');
+
+/** Magnet: gold around a point joins the haul. Uses up the player's magnet item unless consume is false. */
+export function attract(
+  p: PlayerRuntime,
+  s: SessionCtx,
+  at: Vec2,
+  consume = true,
+  radius: number = HOOK_PHYSICS.magnetRadius,
+  pulls: (e: Entity) => boolean = isSmallGold,
+): void {
   if (consume) p.magnet = false;
   const r2 = radius ** 2;
   for (const e of s.entities) {
-    if (!e.alive || e.grabbedBy || !e.tags.includes('gold') || !e.tags.includes('small')) continue;
+    if (!e.alive || e.grabbedBy || !pulls(e)) continue;
     if (dist2(e.pos, at) > r2) continue;
     e.grabbedBy = p.id;
     p.hook.grabbed.push(e);

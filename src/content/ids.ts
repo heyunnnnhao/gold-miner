@@ -7,6 +7,7 @@ export type MineralId =
   | 'rock-s'
   | 'rock-l'
   | 'diamond'
+  | 'ruby'
   | 'bone'
   | 'mystery-bag'
   | 'tnt'
@@ -26,7 +27,7 @@ export type ItemId =
   | 'lucky-coin';
 export type BuffId =
   'strength' | 'clover' | 'rock-book' | 'polish' | 'steady-rope' | 'treasure-map' | 'contract';
-export type HookId = 'basic' | 'scope' | 'swift' | 'claw' | 'saw' | 'pierce' | 'appraiser' | 'magnet';
+export type ModuleId = 'saw' | 'claw' | 'swift' | 'pierce' | 'appraiser' | 'magnet' | 'scope';
 export type HookTraitId = 'aimLine' | 'killPath' | 'pierceRock' | 'appraise' | 'magnetPull';
 export type TalentId =
   | 'diamond-hunter'

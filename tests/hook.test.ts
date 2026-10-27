@@ -154,10 +154,10 @@ describe('items and effects', () => {
   });
 });
 
-describe('saw hook and creatures', () => {
+describe('saw module and creatures', () => {
   it('kills pigs on the way; a diamond pig drops its diamond', () => {
-    const run = makeRun({ level: 5, hooks: [{ uid: 'saw-1', defId: 'saw' }] });
-    run.players[0]!.equippedHook = 'saw-1';
+    const run = makeRun({ level: 5, modules: [{ uid: 'saw-1', defId: 'saw' }] });
+    run.players[0]!.modules = ['saw-1'];
     const s = emptySession(run);
     const p = s.players[0]!;
     s.status.frozen = 1;

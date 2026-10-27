@@ -52,7 +52,7 @@ export const DEFAULT_KEYMAP: Keymap<Action> = {
   'item.7': digits(7),
   'item.8': digits(8),
   'item.9': digits(9),
-  pause: ['Escape'],
+  pause: ['Escape', 'Space'],
 };
 
 export const itemSlotOf = (a: Action): number | null => (a.startsWith('item.') ? Number(a.slice(5)) - 1 : null);
@@ -63,5 +63,6 @@ export function keyLabel(code: string): string {
   if (code.startsWith('Digit')) return code.slice(5);
   if (code.startsWith('Numpad')) return `小键盘${code.slice(6)}`;
   const arrows: Record<string, string> = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→' };
-  return arrows[code] ?? code;
+  const named: Record<string, string> = { ...arrows, Space: '空格', Escape: 'Esc', Enter: '回车' };
+  return named[code] ?? code;
 }

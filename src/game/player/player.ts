@@ -2,13 +2,17 @@ import { WORLD } from '@/config/global';
 import { HOOK_PHYSICS } from '@/config/hook-physics';
 import { STAT_EFFECTS, type StatKey } from '@/config/progression';
 import { ModStack } from '@/core/mods';
-import type { HookDef, ModCtx, PlayerRuntime, Stat } from '../defs';
+import type { HookTraitId } from '@/content/ids';
+import type { ModCtx, ModuleDef, PlayerRuntime, Stat } from '../defs';
 import { R } from '../registries';
 import type { PlayerState, RunState } from '../state';
 
-export function equippedHookDef(run: RunState, player: PlayerState): HookDef {
-  const inst = run.hooks.find((h) => h.uid === player.equippedHook);
-  return R.hooks.get(inst?.defId ?? 'basic');
+/** Module definitions installed on a player's hook, in slot order. */
+export function installedModules(run: RunState, player: PlayerState): ModuleDef[] {
+  return player.modules.flatMap((uid) => {
+    const inst = run.modules.find((m) => m.uid === uid);
+    return inst && R.modules.has(inst.defId) ? [R.modules.get(inst.defId)] : [];
+  });
 }
 
 /**
@@ -16,11 +20,14 @@ export function equippedHookDef(run: RunState, player: PlayerState): HookDef {
  * Talents are applied by the session afterwards because they need the session context.
  */
 export function createPlayerRuntime(run: RunState, state: PlayerState, minerX: number, index: number): PlayerRuntime {
-  const def = equippedHookDef(run, state);
+  const modules = installedModules(run, state);
   const mods = new ModStack<Stat, ModCtx>();
-  mods.mul('extendSpeed', def.stats.extendMul, { source: 'hook' });
-  mods.mul('retractSpeed', def.stats.retractMul, { source: 'hook' });
-  mods.mul('grabRadius', def.stats.radiusMul, { source: 'hook' });
+  for (const m of modules) {
+    mods.mul('extendSpeed', m.stats.extendMul, { source: `module:${m.id}` });
+    mods.mul('retractSpeed', m.stats.retractMul, { source: `module:${m.id}` });
+    mods.mul('grabRadius', m.stats.radiusMul, { source: `module:${m.id}` });
+  }
+  const traits: HookTraitId[] = [...new Set(modules.flatMap((m) => m.traits))];
 
   for (const key of Object.keys(STAT_EFFECTS) as StatKey[]) {
     const points = state.stats[key];
@@ -41,7 +48,8 @@ export function createPlayerRuntime(run: RunState, state: PlayerState, minerX: n
     earned: 0,
     hook: {
       owner: state.id,
-      def,
+      modules,
+      traits,
       state: 'swing',
       pivot: { x: minerX, y: WORLD.groundY + HOOK_PHYSICS.pivotOffsetY },
       angle: 0,

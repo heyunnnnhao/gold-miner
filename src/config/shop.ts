@@ -4,7 +4,7 @@ export const BOMB_BASE_PRICE = 150;
 export const BOMB_STOCK = 3;
 export const PRICE_GROWTH = 0.1;
 export const PRICE_JITTER = 0.2;
-export const HOOK_SELL_RATIO = 0.5;
+export const MODULE_SELL_RATIO = 0.5;
 
 /** base × (1 + 0.1 × (level − 1)) × (1 ± 20%) */
 export function shopPrice(base: number, level: number, rng: Rng): number {

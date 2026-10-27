@@ -8,8 +8,6 @@ import { R } from './registries';
 import type { Economy } from './defs';
 import type { LevelResult, PlayerId, PlayerState, RunState } from './state';
 
-export const starterHookUid = (id: PlayerId): string => `basic-${id}`;
-
 export function createPlayer(id: PlayerId): PlayerState {
   return {
     id,
@@ -19,7 +17,7 @@ export function createPlayer(id: PlayerId): PlayerState {
     stats: { str: 0, agi: 0, acc: 0, luk: 0 },
     talents: [],
     talentChoices: [],
-    equippedHook: starterHookUid(id),
+    modules: [],
   };
 }
 
@@ -33,7 +31,7 @@ export function createRun(mode: Mode, seed: number): RunState {
     items: {},
     buffs: [],
     hotbar: Array.from({ length: GLOBAL.hotbarSize }, () => null),
-    hooks: ids.map((id) => ({ uid: starterHookUid(id), defId: 'basic' as const })),
+    modules: [],
     players: ids.map(createPlayer),
     runSeed: seed,
     phase: 'level',

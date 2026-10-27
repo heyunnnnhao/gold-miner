@@ -31,32 +31,48 @@ export function XpBar({ player }: { player: PlayerState }) {
   );
 }
 
-/** Stat point allocation for one player. */
+/** Stat point allocation for one player: big rows, a clear + button, and a pop on the value that changed. */
 export function StatAllocator({ player }: { player: PlayerState }) {
+  const [bump, setBump] = useState<{ key: StatKey; n: number } | null>(null);
+  const points = player.statPoints;
   return (
     <div>
-      <div className="row" style={{ marginBottom: 6 }}>
-        <strong>属性</strong>
-        <span className="spacer" />
-        <span className={player.statPoints > 0 ? 'gold' : 'muted'}>可用点数 {player.statPoints}</span>
+      <div className="stat-head">
+        <strong>属性加点</strong>
+        <span className={`points ${points > 0 ? 'has' : ''}`}>
+          可用点数 <b>{points}</b>
+        </span>
       </div>
-      {(Object.keys(STAT_NAMES) as StatKey[]).map((k) => (
-        <div className="stat-row" key={k}>
-          <span>{STAT_NAMES[k]}</span>
-          <strong>{player.stats[k]}</strong>
-          <span className="small muted">{STAT_DESC[k]}</span>
-          <button
-            className="btn small secondary"
-            disabled={player.statPoints <= 0}
-            onClick={() => {
-              audio.play('click');
-              dispatchAndSave((r) => allocateStat(r, player.id, k));
-            }}
-          >
-            +1
-          </button>
-        </div>
-      ))}
+      <div className="stat-list">
+        {(Object.keys(STAT_NAMES) as StatKey[]).map((k) => (
+          <div className="stat-item" key={k}>
+            <div>
+              <div className="stat-name">{STAT_NAMES[k]}</div>
+              <div className="stat-desc">每点：{STAT_DESC[k]}</div>
+            </div>
+            <span
+              key={bump?.key === k ? bump.n : 0}
+              className={`stat-value ${bump?.key === k ? 'bump' : ''}`}
+            >
+              {player.stats[k]}
+            </span>
+            <button
+              className="stat-plus"
+              aria-label={`${STAT_NAMES[k]} +1`}
+              title={points > 0 ? `${STAT_NAMES[k]} +1` : '没有可用的属性点'}
+              disabled={points <= 0}
+              onClick={() => {
+                const err = dispatchAndSave((r) => allocateStat(r, player.id, k));
+                if (err) return;
+                audio.play('levelup');
+                setBump((b) => ({ key: k, n: (b?.n ?? 0) + 1 }));
+              }}
+            >
+              +
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -68,7 +84,9 @@ export function TalentPicker({ player }: { player: PlayerState }) {
     <div className="banner">
       <div style={{ marginBottom: 8 }}>
         <strong className="gold">选择一个天赋</strong>
-        {player.talentChoices.length > 1 && <span className="muted small"> （还有 {player.talentChoices.length - 1} 次）</span>}
+        {player.talentChoices.length > 1 && (
+          <span className="muted small"> （还有 {player.talentChoices.length - 1} 次）</span>
+        )}
       </div>
       <div className="talent-pick">
         {choices.map((id: TalentId) => {

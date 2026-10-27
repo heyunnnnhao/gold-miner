@@ -1,80 +1,71 @@
-import type { HookDef } from '@/game/defs';
+import type { ModuleDef } from '@/game/defs';
 
 const plain = { extendMul: 1, retractMul: 1, radiusMul: 1 };
 
-// A hook = stats + a list of traits. New hooks (including trait combos) are one entry each.
-// Prices: equipment is a long-term investment, from the saw (cheapest) up to the scope (most expensive).
-export const HOOKS: HookDef[] = [
-  {
-    id: 'basic',
-    name: '铁钩',
-    desc: '朴实无华的初始抓钩',
-    price: 0,
-    stats: plain,
-    traits: [],
-    sellable: false,
-  },
+// Modules plug into a hook (3 slots). Stats multiply across installed modules, traits combine.
+// Prices: the saw module is the cheapest, the scope module the most expensive.
+export const MODULES: ModuleDef[] = [
   {
     id: 'saw',
-    name: '锯齿钩',
+    name: '锯齿模块',
+    icon: '🪚',
     desc: '伸出时锯死路径上的小动物，钩子不停',
-    price: 2000,
+    price: 1600,
     stats: plain,
     traits: ['killPath'],
-    sellable: true,
   },
   {
     id: 'claw',
-    name: '巨爪',
+    name: '巨爪模块',
+    icon: '🦾',
     desc: '判定半径 ×1.6，伸出 ×0.9',
-    price: 3000,
+    price: 2400,
     stats: { extendMul: 0.9, retractMul: 1, radiusMul: 1.6 },
     traits: [],
-    sellable: true,
   },
   {
     id: 'swift',
-    name: '疾风钩',
+    name: '疾风模块',
+    icon: '💨',
     desc: '伸出 ×1.5，回收 ×1.3',
-    price: 3500,
+    price: 2800,
     stats: { extendMul: 1.5, retractMul: 1.3, radiusMul: 1 },
     traits: [],
-    sellable: true,
   },
   {
     id: 'pierce',
-    name: '穿石钩',
+    name: '穿石模块',
+    icon: '⛏️',
     desc: '伸出时直接穿过石头，只抓值钱的东西',
-    price: 4000,
+    price: 3200,
     stats: plain,
     traits: ['pierceRock'],
-    sellable: true,
   },
   {
     id: 'appraiser',
-    name: '鉴宝钩',
-    desc: '钻石和神秘袋价值 +30%',
-    price: 4500,
+    name: '鉴宝模块',
+    icon: '💎',
+    desc: '宝石（钻石、红宝石）和神秘袋价值 +30%',
+    price: 3600,
     stats: plain,
     traits: ['appraise'],
-    sellable: true,
   },
   {
     id: 'magnet',
-    name: '磁力钩',
-    desc: '每次抓取都会吸附周围的小金块一起带回',
-    price: 5500,
+    name: '磁力模块',
+    icon: '🧲',
+    desc: '每次抓取都吸附周围的小、中金块一起带回',
+    price: 4400,
     stats: { extendMul: 1, retractMul: 0.95, radiusMul: 1 },
     traits: ['magnetPull'],
-    sellable: true,
   },
   {
     id: 'scope',
-    name: '瞄准钩',
+    name: '瞄准模块',
+    icon: '🎯',
     desc: '摆动时显示虚线引导线，判定半径 ×1.15',
-    price: 8000,
+    price: 6400,
     stats: { extendMul: 1, retractMul: 1, radiusMul: 1.15 },
     traits: ['aimLine'],
-    sellable: true,
   },
 ];

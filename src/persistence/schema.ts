@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { GLOBAL } from '@/config/global';
 import type { RunState } from '@/game/state';
 import { R } from '@/game/registries';
 
-export const SAVE_VERSION = 1;
+/** v2: hooks became modules (3 slots per hook). */
+export const SAVE_VERSION = 2;
 
 const playerId = z.enum(['p1', 'p2']);
 
@@ -11,10 +13,15 @@ const playerSchema = z.object({
   lv: z.number().int().min(1),
   xp: z.number().min(0),
   statPoints: z.number().int().min(0),
-  stats: z.object({ str: z.number().int(), agi: z.number().int(), acc: z.number().int(), luk: z.number().int() }),
+  stats: z.object({
+    str: z.number().int(),
+    agi: z.number().int(),
+    acc: z.number().int(),
+    luk: z.number().int(),
+  }),
   talents: z.array(z.string()),
   talentChoices: z.array(z.array(z.string())),
-  equippedHook: z.string(),
+  modules: z.array(z.string()),
 });
 
 const levelResultSchema = z.object({
@@ -23,7 +30,9 @@ const levelResultSchema = z.object({
   earned: z.number(),
   wallet: z.number(),
   passed: z.boolean(),
-  players: z.array(z.object({ id: playerId, xp: z.number(), earned: z.number(), levelsGained: z.array(z.number()) })),
+  players: z.array(
+    z.object({ id: playerId, xp: z.number(), earned: z.number(), levelsGained: z.array(z.number()) }),
+  ),
 });
 
 const runSchema = z.object({
@@ -34,7 +43,7 @@ const runSchema = z.object({
   items: z.record(z.string(), z.number().int().min(0)),
   buffs: z.array(z.string()),
   hotbar: z.array(z.string().nullable()),
-  hooks: z.array(z.object({ uid: z.string(), defId: z.string() })),
+  modules: z.array(z.object({ uid: z.string(), defId: z.string() })),
   players: z.array(playerSchema).min(1).max(2),
   runSeed: z.number(),
   phase: z.enum(['level', 'result', 'shop', 'prep', 'over']),
@@ -44,7 +53,7 @@ const runSchema = z.object({
       offers: z.array(
         z.object({
           id: z.string(),
-          kind: z.enum(['bomb', 'item', 'buff', 'hook']),
+          kind: z.enum(['bomb', 'item', 'buff', 'module']),
           ref: z.string(),
           price: z.number(),
           stock: z.number().nullable(),
@@ -64,31 +73,66 @@ export const saveFileSchema = z.object({
 
 export type SaveFile = { version: number; savedAt: string; run: RunState };
 
+type Json = Record<string, unknown>;
+
 /** Upgrades older save shapes step by step: migrations[v] turns version v into v + 1. */
-const migrations: Record<number, (data: Record<string, unknown>) => Record<string, unknown>> = {};
+const migrations: Record<number, (data: Json) => Json> = {
+  // v1 → v2: every bought hook becomes a module of the same kind; the equipped one is installed
+  1: (data) => {
+    const run = { ...(data.run as Json) };
+    const hooks = (run.hooks as { uid: string; defId: string }[] | undefined) ?? [];
+    const modules = hooks.filter((h) => h.defId !== 'basic');
+    const moduleUids = new Set(modules.map((m) => m.uid));
+    delete run.hooks;
+    run.modules = modules;
+    run.players = ((run.players as Json[] | undefined) ?? []).map((p) => {
+      const { equippedHook, ...rest } = p;
+      return {
+        ...rest,
+        modules: typeof equippedHook === 'string' && moduleUids.has(equippedHook) ? [equippedHook] : [],
+      };
+    });
+    const shop = run.shop as { offers: Json[] } | null | undefined;
+    if (shop) {
+      run.shop = {
+        ...shop,
+        offers: shop.offers.map((o) =>
+          o.kind === 'hook' ? { ...o, kind: 'module', id: `module:${String(o.ref)}` } : o,
+        ),
+      };
+    }
+    return { ...data, version: 2, run };
+  },
+};
 
 /** Drops references to content that no longer exists, so removed items can't crash a load. */
 function sanitize(run: z.infer<typeof runSchema>): RunState {
   const items = Object.fromEntries(Object.entries(run.items).filter(([id]) => R.items.has(id)));
-  const hooks = run.hooks.filter((h) => R.hooks.has(h.defId));
-  const hookUids = new Set(hooks.map((h) => h.uid));
+  const modules = run.modules.filter((m) => R.modules.has(m.defId));
+  const moduleUids = new Set(modules.map((m) => m.uid));
   return {
     ...run,
     items,
     buffs: run.buffs.filter((b) => R.buffs.has(b)),
     hotbar: run.hotbar.map((id) => (id && R.items.has(id) ? id : null)),
-    hooks,
+    modules,
+    shop: run.shop && {
+      ...run.shop,
+      offers: run.shop.offers.filter((o) => o.kind !== 'module' || R.modules.has(o.ref)),
+    },
     players: run.players.map((p) => ({
       ...p,
       talents: p.talents.filter((t) => R.talents.has(t)),
-      talentChoices: p.talentChoices.map((c) => c.filter((t) => R.talents.has(t))).filter((c) => c.length > 0),
-      equippedHook: hookUids.has(p.equippedHook) ? p.equippedHook : `basic-${p.id}`,
+      talentChoices: p.talentChoices
+        .map((c) => c.filter((t) => R.talents.has(t)))
+        .filter((c) => c.length > 0),
+      modules: p.modules.filter((uid) => moduleUids.has(uid)).slice(0, GLOBAL.hookSlots),
     })),
   } as RunState;
 }
 
 export function parseSave(raw: unknown): SaveFile {
-  let data = raw as Record<string, unknown>;
+  let data = raw as Json;
   let version = typeof data?.version === 'number' ? data.version : 0;
   while (version < SAVE_VERSION) {
     const m = migrations[version];

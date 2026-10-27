@@ -26,6 +26,7 @@ export const UNLOCKS: { level: number; minerals?: MineralId[]; creatures?: Creat
   { level: 3, minerals: ['mystery-bag', 'gold-xl'] },
   { level: 4, minerals: ['diamond'] },
   { level: 5, minerals: ['tnt'], creatures: ['diamond-pig'] },
+  { level: 6, minerals: ['ruby'] },
 ];
 
 export function unlockedAt(n: number): { minerals: MineralId[]; creatures: CreatureId[] } {

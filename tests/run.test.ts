@@ -5,11 +5,11 @@ import {
   buyOffer,
   enterPrep,
   enterShop,
-  equipHook,
+  installModule,
   pickTalent,
-  sellHook,
+  sellModule,
   startNextLevel,
-  swapHooks,
+  uninstallModule,
 } from '@/stores/actions/run-actions';
 import type { RunState } from '@/game/state';
 import { parseSave, SAVE_VERSION } from '@/persistence/schema';
@@ -57,7 +57,7 @@ describe('shop and prep actions', () => {
     expect(shopRun().shop!.offers.filter((o) => o.kind === 'item' || o.kind === 'buff')).toHaveLength(3);
   });
 
-  it('buys bombs, hooks and enforces wallet and stock', () => {
+  it('buys bombs, modules and enforces wallet and stock', () => {
     let run = shopRun();
     const bomb = run.shop!.offers.find((o) => o.kind === 'bomb')!;
     run = unwrap(buyOffer(run, 'bomb'));
@@ -66,10 +66,10 @@ describe('shop and prep actions', () => {
     run = unwrap(buyOffer(run, 'bomb'));
     run = unwrap(buyOffer(run, 'bomb'));
     expect(buyOffer(run, 'bomb').ok).toBe(false);
-    run = unwrap(buyOffer(run, 'hook:swift'));
-    expect(run.hooks.map((h) => h.defId)).toContain('swift');
+    run = unwrap(buyOffer(run, 'module:saw'));
+    expect(run.modules.map((m) => m.defId)).toContain('saw');
     const poor = { ...run, wallet: 0 };
-    expect(buyOffer(poor, 'hook:saw').ok).toBe(false);
+    expect(buyOffer(poor, 'module:scope').ok).toBe(false);
   });
 
   it('items go into the hotbar', () => {
@@ -80,18 +80,25 @@ describe('shop and prep actions', () => {
     expect(run.hotbar).toContain(item.ref);
   });
 
-  it('hooks are exclusive per player; equipping a held hook trades', () => {
-    let run = unwrap(enterShop({ ...makeRun({ wallet: 5000 }, 'duo'), phase: 'result' }));
-    run = unwrap(buyOffer(run, 'hook:claw'));
-    const claw = run.hooks.find((h) => h.defId === 'claw')!.uid;
-    run = unwrap(equipHook(run, 'p1', claw));
-    run = unwrap(equipHook(run, 'p2', claw));
-    expect(run.players[1]!.equippedHook).toBe(claw);
-    expect(run.players[0]!.equippedHook).toBe('basic-p2');
-    run = unwrap(swapHooks(run));
-    expect(run.players[0]!.equippedHook).toBe(claw);
-    expect(sellHook(run, claw).ok).toBe(false);
-    expect(sellHook(run, 'basic-p1').ok).toBe(false);
+  it('modules: max 3 per hook, no duplicates, move between players, sell only when uninstalled', () => {
+    let run = unwrap(enterShop({ ...makeRun({ wallet: 50000 }, 'duo'), phase: 'result' }));
+    for (const id of ['module:claw', 'module:claw', 'module:saw', 'module:swift', 'module:pierce'])
+      run = unwrap(buyOffer(run, id));
+    const uid = (defId: string, nth = 0) => run.modules.filter((m) => m.defId === defId)[nth]!.uid;
+    run = unwrap(installModule(run, 'p1', uid('claw')));
+    expect(installModule(run, 'p1', uid('claw', 1)).ok).toBe(false);
+    run = unwrap(installModule(run, 'p1', uid('saw')));
+    run = unwrap(installModule(run, 'p1', uid('swift')));
+    expect(installModule(run, 'p1', uid('pierce')).ok).toBe(false);
+    // installing on P2 moves it off P1
+    run = unwrap(installModule(run, 'p2', uid('saw')));
+    expect(run.players[0]!.modules).not.toContain(uid('saw'));
+    expect(run.players[1]!.modules).toEqual([uid('saw')]);
+    expect(sellModule(run, uid('saw')).ok).toBe(false);
+    run = unwrap(uninstallModule(run, 'p2', uid('saw')));
+    const before = run.wallet;
+    run = unwrap(sellModule(run, uid('saw')));
+    expect(run.wallet).toBe(before + 800);
   });
 
   it('stat allocation, talents and next level', () => {
@@ -110,6 +117,21 @@ describe('shop and prep actions', () => {
 });
 
 describe('save schema', () => {
+  it('migrates v1 hooks into installed modules', () => {
+    const v1 = JSON.parse(JSON.stringify({ version: 1, savedAt: 'x', run: { ...makeRun() } }));
+    delete v1.run.modules;
+    v1.run.hooks = [
+      { uid: 'basic-p1', defId: 'basic' },
+      { uid: 'h-claw', defId: 'claw' },
+      { uid: 'h-saw', defId: 'saw' },
+    ];
+    v1.run.players[0].equippedHook = 'h-claw';
+    delete v1.run.players[0].modules;
+    const file = parseSave(v1);
+    expect(file.run.modules.map((m) => m.defId)).toEqual(['claw', 'saw']);
+    expect(file.run.players[0]!.modules).toEqual(['h-claw']);
+  });
+
   it('round-trips a run and drops unknown content', () => {
     const run = makeRun({ items: { hourglass: 2 } });
     const raw = JSON.parse(JSON.stringify({ version: SAVE_VERSION, savedAt: 'x', run: { ...run, buffs: ['nope', 'clover'] } }));
